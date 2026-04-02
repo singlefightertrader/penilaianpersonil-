@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>COMMAND DASHBOARD ELITE · ENTERPRISE EDITION</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- QRCode.js (standar) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF - Versi yang lebih stabil untuk mobile -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box;}
+body{font-family:Segoe UI, system-ui;background:#0b1220;color:#e5e7eb;margin:0;padding:0;}
+.header{background:#020617;padding:16px;text-align:center;color:#38bdf8;font-weight:bold;font-size:1.2rem;}
+.container{padding:12px;max-width:1000px;margin:auto;}
+.card{background:#111827;padding:14px;border-radius:12px;margin-bottom:12px;border:1px solid #1f2937;}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;background:#020617;color:#fff;border:1px solid #1f2937;font-size:1rem;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:#38bdf8;color:#000;font-weight:bold;font-size:1rem;cursor:pointer;transition:opacity 0.2s;}
+button:active{opacity:0.7;}
+.point{margin-bottom:10px;border-bottom:1px dashed #1f2937;padding-bottom:6px;}
+.detail{font-size:11px;color:#94a3b8;white-space:pre-line;line-height:1.5;}
+.hidden{display:none !important;}
+.badge{padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;}
+.A{background:#22c55e;}
+.B{background:#3b82f6;}
+.C{background:#facc15;color:#000;}
+.D,.E{background:#ef4444;}
+.analysis{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.rank{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.sp{background:#1e293b;padding:10px;margin-top:10px;border-radius:8px;}
+.button-group{display:flex;gap:10px;flex-wrap:wrap;}
+.button-group button{flex:1;min-width:120px;}
+.lock-badge{background:#ef4444;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.unlock-badge{background:#22c55e;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.stat-canvas{max-width:100%;height:auto;background:#1f2937;border-radius:12px;padding:12px;}
+.modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+.modal-content{
+    background:#111827;
+    padding:24px;
+    border-radius:16px;
+    width:90%;
+    max-width:400px;
+    text-align:center;
+    pointer-events:auto;
+}
+canvas {
+    touch-action: manipulation;
+    max-width: 100%;
+    height: auto;
+}
+#closeStatsBtn {
+    margin-top: 20px;
+    background:#ef4444;
+    color:#fff;
+}
+.toast-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #22c55e;
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: bold;
+    z-index: 2000;
+    animation: fadeOut 2s ease forwards;
+    pointer-events: none;
+}
+@keyframes fadeOut {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(20px); visibility: hidden; }
+}
+@media (max-width:640px){
+    .container{padding:8px;}
+    .card{padding:10px;}
+    button{padding:14px;}
+    input,select,textarea{font-size:16px;}
+    .button-group{flex-direction:column;}
+    .button-group button{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">⚔️ COMMAND DASHBOARD ELITE · ENTERPRISE ⚔️</div>
+
+<div class="container">
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h3>🔐 AKSES SISTEM (DEMO)</h3>
+        <select id="roleSelect" style="margin:12px 0;">
+            <option value="admin">Admin (Akses Penuh)</option>
+            <option value="supervisor">Supervisor (Baca & Tambah, Tanpa Hapus/Lock)</option>
+        </select>
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="loginBtn">MASUK</button>
+        <div id="loginError" style="color:#f87171; margin-top:10px; font-size:12px;"></div>
+        <div style="margin-top:12px; font-size:11px; color:#6b7280;">admin: admin123 / supervisor: spv123</div>
+        <div style="margin-top:8px; font-size:10px; color:#facc15;">⚠️ Mode demo – password hardcoded untuk uji coba offline</div>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <div id="listView">
+        <div class="button-group">
+            <button onclick="addPerson()">➕ Tambah Personel</button>
+            <button onclick="pdfAll()">📑 Rekap Semua Personel</button>
+            <button onclick="exportExcel()">📎 Export Excel (Semua Riwayat)</button>
+        </div>
+        <div id="personList"></div>
+        <div id="rankBox" class="rank"></div>
+    </div>
+
+    <div id="detailView" class="hidden">
+        <div class="button-group">
+            <button onclick="back()">⬅️ Kembali</button>
+            <button id="deleteBtn" onclick="deletePerson()">🗑️ Hapus Personel</button>
+            <button id="lockBtn" onclick="toggleLock()">🔒 Kunci/Timpa</button>
+        </div>
+        <div class="card">
+            <input id="name" placeholder="Nama Personel">
+            <input id="month" placeholder="Periode (contoh: Januari 2026)">
+            <input id="location" placeholder="Lokasi Penilaian (contoh: Bekasi)">
+        </div>
+        <div class="card">
+            <textarea id="noteBox" placeholder="Catatan"></textarea>
+        </div>
+        <div id="indicators"></div>
+        <button id="saveBtn" onclick="save()">💾 SIMPAN DATA</button>
+        <button onclick="pdf()">📄 Export PDF (Personel ini)</button>
+        <button onclick="showStats()">📊 Grafik Performa Personel</button>
+        <div id="analysisBox" class="analysis"></div>
+        <div id="spBox" class="sp"></div>
+        <div id="aiRecommendation" class="analysis" style="background:#1e293b; margin-top:10px;"></div>
+    </div>
+</div>
+
+<!-- Modal Statistik -->
+<div id="statsModal" class="modal hidden">
+    <div class="modal-content" style="max-width:700px; pointer-events:auto;">
+        <h3>📈 GRAFIK PERFORMA</h3>
+        <canvas id="performanceChart" width="600" height="300" style="background:#1f2937; border-radius:12px; max-width:100%; height:auto;"></canvas>
+        <button id="closeStatsBtn" onclick="closeStats()">Tutup</button>
+    </div>
+</div>
+
+<script>
+// ==================== MULTI USER ====================
+let currentRole = null;
+let loginLocked = false;
+let statsModalInitialized = false;
+let currentChart = null;
+
+function showToast(message, isError = false) {
+    let toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    if (isError) {
+        toast.style.background = '#ef4444';
+        toast.style.color = '#fff';
+    }
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        if (toast && toast.remove) toast.remove();
+    }, 2500);
+}
+
+function initStatsModalEvents() {
+    if (statsModalInitialized) return;
+    
+    let statsModal = document.getElementById("statsModal");
+    if (!statsModal) return;
+    
+    let statsContent = statsModal.querySelector(".modal-content");
+    if (!statsContent) return;
+    
+    statsModal.addEventListener("click", function(e) {
+        if (e.target === statsModal) {
+            closeStats();
+        }
+    });
+    
+    statsContent.addEventListener("click", function(e) {
+        e.stopPropagation();
+    });
+    
+    statsModalInitialized = true;
+}
+
+function checkLogin() {
+    if (loginLocked) return;
+    loginLocked = true;
+
+    const pwd = document.getElementById("loginPassword").value;
+    const role = document.getElementById("roleSelect").value;
+
+    if ((role === 'admin' && pwd === 'admin123') || (role === 'supervisor' && pwd === 'spv123')) {
+        currentRole = role;
+
+        var loginModal = document.getElementById("loginModal");
+        if (loginModal) {
+            loginModal.remove();
+        }
+
+        document.getElementById("mainApp").classList.remove("hidden");
+        
+        let statsModal = document.getElementById("statsModal");
+        if (statsModal) {
+            statsModal.classList.add("hidden");
+        }
+        
+        initStatsModalEvents();
+        
+        renderList();
+        renderRank();
+        applyRoleUI();
+        
+        showToast("✅ Login berhasil! Selamat datang, " + (role === 'admin' ? 'Admin' : 'Supervisor'));
+
+    } else {
+        loginLocked = false;
+        document.getElementById("loginError").innerText = "Password salah!";
+    }
+}
+
+document.getElementById("loginBtn").addEventListener("click", checkLogin);
+
+function applyRoleUI() {
+    const isAdmin = (currentRole === 'admin');
+    const deleteBtn = document.getElementById("deleteBtn");
+    const lockBtn = document.getElementById("lockBtn");
+    if (deleteBtn) deleteBtn.style.display = isAdmin ? "block" : "none";
+    if (lockBtn) lockBtn.style.display = isAdmin ? "block" : "none";
+}
+
+// ==================== DATA MODEL ====================
+let db = JSON.parse(localStorage.getItem("dbElite") || "[]");
+let currentIndex = null;
+let currentHistoryLocked = false;
+
+const nameInput = document.getElementById("name");
+const monthInput = document.getElementById("month");
+const locationInput = document.getElementById("location");
+const noteBox = document.getElementById("noteBox");
+
+let snapshot = null;
+
+function saveDB() {
+    localStorage.setItem("dbElite", JSON.stringify(db));
+}
+
+function convert(v) { return { A: 5, B: 4, C: 3, D: 2, E: 1 }[v]; }
+
+let indicators = [
+    { name: "Discipline & Attendance", points: [
+        { title: "Kehadiran sesuai jadwal kerja", detail: "• Hadir sesuai jadwal kerja yang telah ditetapkan tanpa ketidakhadiran tanpa keterangan\n• Tidak melakukan mangkir atau absensi fiktif\n• Menunjukkan konsistensi kehadiran selama periode penilaian\n• Tidak sering mengajukan izin mendadak tanpa alasan jelas" },
+        { title: "Ketepatan waktu", detail: "• Datang sebelum atau tepat pada waktu yang ditentukan\n• Tidak terlambat saat pergantian shift\n• Siap melaksanakan tugas saat jam kerja dimulai\n• Tidak memperpanjang waktu istirahat di luar ketentuan" },
+        { title: "Tidak meninggalkan pos", detail: "• Tetap berada di area tanggung jawab selama jam tugas\n• Tidak meninggalkan pos tanpa izin resmi\n• Siap siaga saat dibutuhkan\n• Menjaga area kerja tetap dalam pengawasan" },
+        { title: "Kepatuhan jam kerja", detail: "• Mematuhi jadwal kerja sesuai ketentuan\n• Tidak pulang sebelum waktunya\n• Tidak melanggar sistem shift\n• Disiplin terhadap waktu operasional" }
+    ] },
+    { name: "SOP Compliance", points: [
+        { title: "Kepatuhan SOP", detail: "• Menjalankan prosedur operasional sesuai standar\n• Tidak melakukan penyimpangan prosedur\n• Memahami SOP dengan baik\n• Menjadikan SOP sebagai acuan kerja utama" },
+        { title: "Penggunaan APD", detail: "• Menggunakan APD sesuai standar keselamatan\n• Tidak mengabaikan perlindungan diri\n• Menggunakan APD secara benar dan konsisten\n• Menjadi contoh bagi personel lain" },
+        { title: "Tidak melanggar prosedur", detail: "• Tidak melakukan tindakan di luar prosedur\n• Tidak mengambil keputusan tanpa dasar\n• Menghindari tindakan berisiko tinggi\n• Menjaga kepatuhan terhadap aturan operasional" },
+        { title: "Menjalankan instruksi", detail: "• Melaksanakan instruksi kerja dengan tepat\n• Tidak membangkang terhadap perintah\n• Responsif terhadap arahan atasan\n• Menyelesaikan tugas sesuai instruksi" }
+    ] },
+    { name: "Professional Competence", points: [
+        { title: "Pemahaman tugas", detail: "• Menguasai tugas pokok dan fungsi\n• Tidak mengalami kebingungan dalam bekerja\n• Memahami area tanggung jawab\n• Mampu bekerja tanpa pengawasan terus-menerus" },
+        { title: "Komunikasi", detail: "• Menyampaikan informasi dengan jelas dan sistematis\n• Menghindari miskomunikasi\n• Berkomunikasi efektif dengan tim\n• Mampu membuat laporan sederhana" },
+        { title: "Handling insiden", detail: "• Mampu menangani insiden sesuai prosedur\n• Tidak panik dalam kondisi darurat\n• Mengambil tindakan yang tepat\n• Menghubungi pihak terkait bila diperlukan" },
+        { title: "Decision making", detail: "• Mengambil keputusan secara cepat dan tepat\n• Tidak ragu dalam situasi kritis\n• Berdasarkan logika dan SOP\n• Tidak ceroboh dalam bertindak" }
+    ] },
+    { name: "Patrol Performance", points: [
+        { title: "Patroli sesuai jadwal", detail: "• Melaksanakan patroli sesuai jadwal\n• Tidak melewatkan waktu patroli\n• Konsisten dalam pelaksanaan\n• Tidak menunda kegiatan patroli" },
+        { title: "Checkpoint", detail: "• Melakukan pengecekan seluruh titik kontrol\n• Tidak ada checkpoint yang terlewat\n• Validasi dilakukan dengan benar\n• Dokumentasi patroli lengkap" },
+        { title: "Tidak ada area miss", detail: "• Seluruh area tercover dengan baik\n• Tidak ada blind spot\n• Patroli dilakukan secara menyeluruh\n• Tidak sekadar formalitas" },
+        { title: "Laporan akurat", detail: "• Laporan sesuai kondisi nyata\n• Tidak manipulasi data\n• Informasi lengkap dan jelas\n• Dapat dipertanggungjawabkan" }
+    ] },
+    { name: "Risk Awareness", points: [
+        { title: "Identifikasi risiko", detail: "• Mampu mengenali potensi bahaya\n• Tidak mengabaikan risiko\n• Proaktif dalam pengamatan\n• Cepat mengenali kondisi abnormal" },
+        { title: "Kewaspadaan", detail: "• Selalu dalam kondisi siaga\n• Tidak lengah selama bertugas\n• Fokus terhadap lingkungan sekitar\n• Tidak terdistraksi" },
+        { title: "Respons bahaya", detail: "• Cepat merespon kondisi berbahaya\n• Tidak menunda tindakan\n• Bertindak sesuai SOP\n• Mengutamakan keselamatan" },
+        { title: "Pelaporan", detail: "• Melaporkan kejadian tepat waktu\n• Tidak menutup-nutupi kejadian\n• Informasi akurat dan jelas\n• Disampaikan kepada pihak terkait" }
+    ] },
+    { name: "Work Attitude", points: [
+        { title: "Sikap kerja", detail: "• Menunjukkan sikap profesional\n• Tidak malas atau acuh\n• Memiliki etos kerja tinggi\n• Disiplin dalam perilaku" },
+        { title: "Stabil emosi", detail: "• Tidak mudah terpancing emosi\n• Tetap tenang dalam tekanan\n• Tidak konflik dengan rekan kerja\n• Mampu mengendalikan diri" },
+        { title: "Tanggung jawab", detail: "• Menyelesaikan tugas dengan baik\n• Tidak melempar kesalahan\n• Bertanggung jawab penuh\n• Tidak menghindari masalah" },
+        { title: "Etika", detail: "• Bersikap sopan terhadap semua pihak\n• Tidak arogan\n• Menjaga nama baik perusahaan\n• Berperilaku sesuai norma" }
+    ] },
+    { name: "Teamwork & Command", points: [
+        { title: "Kerja tim", detail: "• Mampu bekerja sama secara efektif\n• Tidak egois\n• Mendukung rekan kerja\n• Menjaga kekompakan tim" },
+        { title: "Kepatuhan", detail: "• Patuh terhadap atasan\n• Tidak membangkang\n• Mengikuti arahan\n• Menghormati struktur komando" },
+        { title: "Koordinasi", detail: "• Komunikasi antar personel berjalan baik\n• Tidak terjadi miskomunikasi\n• Sinkron dalam pelaksanaan tugas\n• Tidak bekerja sendiri-sendiri" },
+        { title: "Disiplin perintah", detail: "• Tidak melanggar instruksi\n• Tidak menunda perintah\n• Menjalankan tugas secara tepat\n• Konsisten dalam pelaksanaan" }
+    ] }
+];
+
+function renderIndicators(defaultVal = null) {
+    let box = document.getElementById("indicators");
+    if (!box) return;
+    box.innerHTML = "";
+    indicators.forEach((ind, i) => {
+        let html = `<div class="card"><b>${ind.name}</b>`;
+        ind.points.forEach((p, j) => {
+            html += `
+                <div class="point">
+                    ${p.title}<br>
+                    <span class="detail">${p.detail}</span>
+                    <select data-ind="${i}" data-point="${j}">
+                        <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+                    </select>
+                </div>`;
+        });
+        html += "</div>";
+        box.innerHTML += html;
+    });
+    if (defaultVal) {
+        document.querySelectorAll("select").forEach(s => s.value = defaultVal);
+    }
+}
+
+function getScores() {
+    let scores = [], total = 0;
+    indicators.forEach((ind, i) => {
+        let s = document.querySelectorAll(`select[data-ind='${i}']`);
+        let arr = [];
+        s.forEach(x => {
+            arr.push(x.value);
+            total += convert(x.value);
+        });
+        scores.push(arr);
+    });
+    return { scores, total };
+}
+
+function hasChange() {
+    let now = JSON.stringify({ name: nameInput.value, month: monthInput.value, location: locationInput.value, note: noteBox.value, scores: getScores().scores });
+    return snapshot && now !== snapshot;
+}
+
+function toggleLock() {
+    if (currentRole !== 'admin') return showToast("Hanya admin yang dapat mengunci data.", true);
+    if (currentIndex === null) return;
+    let p = db[currentIndex];
+    let last = p.history.at(-1);
+    if (!last) return;
+    last.locked = !last.locked;
+    saveDB();
+    renderList();
+    renderRank();
+    openDetail(currentIndex);
+    showToast(last.locked ? "🔒 Data terkunci" : "🔓 Data tidak terkunci");
+}
+
+function getDocumentNumber(history) {
+    if (history && history.docNumber) return history.docNumber;
+    const d = new Date();
+    const datePart = d.toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.floor(Math.random() * 10000);
+    return `DOC-${datePart}-${random}`;
+}
+
+function save() {
+    if (!nameInput.value || !monthInput.value) {
+        showToast("Nama dan Periode harus diisi!", true);
+        return;
+    }
+    if (!locationInput.value) {
+        showToast("Lokasi wajib diisi!", true);
+        return;
+    }
+    let { scores, total } = getScores();
+    let max = indicators.reduce((a, b) => a + b.points.length, 0) * 5;
+    let percent = (total / max) * 100;
+    let grade = percent >= 85 ? "A" : percent >= 70 ? "B" : percent >= 50 ? "C" : "D";
+
+    if (currentIndex === null) {
+        db.push({ name: nameInput.value, history: [] });
+        currentIndex = db.length - 1;
+    }
+    let p = db[currentIndex];
+    p.name = nameInput.value;
+
+    let existing = p.history.find(h => h.month === monthInput.value && h.location === locationInput.value);
+    if (existing) {
+        if (existing.locked && currentRole !== 'admin') return showToast("Data terkunci, hanya admin yang dapat mengubah.", true);
+        if (existing.locked && currentRole === 'admin') {
+            if (!confirm("Data terkunci. Admin ingin tetap menimpa?")) return;
+        }
+        if (!confirm("Periode dan lokasi sudah ada. Timpa data lama?")) return;
+        Object.assign(existing, {
+            month: monthInput.value,
+            location: locationInput.value,
+            total,
+            grade,
+            note: noteBox.value,
+            scores,
+            locked: existing.locked || false,
+            docNumber: existing.docNumber || getDocumentNumber(existing)
+        });
+    } else {
+        let newHistory = {
+            month: monthInput.value,
+            location: locationInput.value,
+            total,
+            grade,
+            note: noteBox.value,
+            scores,
+            locked: false
+        };
+        newHistory.docNumber = getDocumentNumber(newHistory);
+        p.history.push(newHistory);
+    }
+    saveDB();
+    snapshot = null;
+    back();
+    renderList();
+    renderRank();
+    showToast("✅ Data berhasil disimpan!");
+}
+
+function deletePerson() {
+    if (currentRole !== 'admin') return showToast("Hanya admin dapat menghapus personel.", true);
+    if (!confirm("Yakin hapus personel ini?")) return;
+    db.splice(currentIndex, 1);
+    saveDB();
+    back();
+    renderList();
+    renderRank();
+    showToast("🗑️ Personel dihapus");
+}
+
+function back() {
+    if (hasChange()) {
+        if (!confirm("Ada perubahan yang belum disimpan. Yakin kembali?")) return;
+    }
+    document.getElementById("listView").classList.remove("hidden");
+    document.getElementById("detailView").classList.add("hidden");
+}
+
+function addPerson() {
+    currentIndex = null;
+    document.getElementById("listView").classList.add("hidden");
+    document.getElementById("detailView").classList.remove("hidden");
+    renderIndicators("C");
+    nameInput.value = "";
+    monthInput.value = "";
+    locationInput.value = "";
+    noteBox.value = "";
+    snapshot = null;
+    document.getElementById("aiRecommendation").innerHTML = "";
+    nameInput.disabled = false;
+    monthInput.disabled = false;
+    locationInput.disabled = false;
+    noteBox.disabled = false;
+    document.querySelectorAll("select").forEach(s => s.disabled = false);
+    document.getElementById("saveBtn").disabled = false;
+}
+
+function openDetail(i) {
+    currentIndex = i;
+    document.getElementById("listView").classList.add("hidden");
+    document.getElementById("detailView").classList.remove("hidden");
+    renderIndicators();
+
+    let p = db[i];
+    nameInput.value = p.name;
+
+    let last = p.history.at(-1);
+    if (last) {
+        monthInput.value = last.month;
+        locationInput.value = last.location || "";
+        noteBox.value = last.note;
+        last.scores.forEach((arr, i) => {
+            let s = document.querySelectorAll(`select[data-ind='${i}']`);
+            arr.forEach((v, j) => {
+                if (s[j]) s[j].value = v;
+            });
+        });
+        currentHistoryLocked = last.locked || false;
+        if (last.locked && currentRole !== 'admin') {
+            nameInput.disabled = true;
+            monthInput.disabled = true;
+            locationInput.disabled = true;
+            noteBox.disabled = true;
+            document.querySelectorAll("select").forEach(s => s.disabled = true);
+            document.getElementById("saveBtn").disabled = true;
+        } else {
+            nameInput.disabled = false;
+            monthInput.disabled = false;
+            locationInput.disabled = false;
+            noteBox.disabled = false;
+            document.querySelectorAll("select").forEach(s => s.disabled = false);
+            document.getElementById("saveBtn").disabled = false;
+        }
+    } else {
+        currentHistoryLocked = false;
+    }
+    snapshot = JSON.stringify({ name: nameInput.value, month: monthInput.value, location: locationInput.value, note: noteBox.value, scores: getScores().scores });
+    generateAIRecommendation(p, last);
+}
+
+function generateAIRecommendation(person, history) {
+    let aiDiv = document.getElementById("aiRecommendation");
+    if (!aiDiv) return;
+    if (!history) {
+        aiDiv.innerHTML = "";
+        return;
+    }
+    let weak = [];
+    history.scores.forEach((cat, idx) => {
+        cat.forEach((val, j) => {
+            if (val === 'D' || val === 'E') {
+                weak.push(`${indicators[idx].points[j].title} (${val})`);
+            }
+        });
+    });
+    let html = "<b>🧠 AI ANALISIS & REKOMENDASI</b><br>";
+    if (weak.length === 0) {
+        html += "✅ Tidak ditemukan kelemahan signifikan. Pertahankan performa!";
+    } else {
+        html += `⚠️ Temuan area yang perlu perhatian:<br>• ${weak.join('<br>• ')}<br><br>`;
+        html += "🎯 Rekomendasi SP: ";
+        let redCount = weak.filter(w => w.includes('(D)') || w.includes('(E)')).length;
+        if (redCount >= 6) html += "SP3 (Tindakan Disiplin Berat)";
+        else if (redCount >= 3) html += "SP2 (Peringatan Tertulis)";
+        else if (redCount >= 1) html += "SP1 (Pembinaan)";
+        else html += "Aman";
+        html += "<br><br>📌 Saran peningkatan: fokus pada pelatihan ulang SOP dan pengawasan langsung.";
+    }
+    aiDiv.innerHTML = html;
+}
+
+function renderList() {
+    let personList = document.getElementById("personList");
+    if (!personList) return;
+    personList.innerHTML = "";
+    if (db.length === 0) {
+        personList.innerHTML = "<div class='card'>Belum ada data</div>";
+        return;
+    }
+    db.forEach((p, i) => {
+        let last = p.history.at(-1);
+        personList.innerHTML += `
+            <div class="card">
+                <b>${escapeHtml(p.name)}</b><br>
+                ${last?.month || "-"} - ${last?.location || "-"} 
+                <span class="badge ${last?.grade || ""}">${last?.grade || "-"}</span>
+                ${last?.locked ? '<span class="lock-badge">🔒 Terkunci</span>' : '<span class="unlock-badge">🔓</span>'}
+                <button onclick="openDetail(${i})">Detail</button>
+            </div>`;
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function renderRank() {
+    let rankBox = document.getElementById("rankBox");
+    if (!rankBox) return;
+    let sorted = [...db].sort((a, b) => (b.history.at(-1)?.total || 0) - (a.history.at(-1)?.total || 0));
+    let html = "<b>🏆 RANKING (berdasarkan penilaian terakhir)</b><br>";
+    let hasData = false;
+    sorted.forEach((p, i) => {
+        let last = p.history.at(-1);
+        if (!last) return;
+        hasData = true;
+        html += `${i + 1}. ${escapeHtml(p.name)} – ${last.total} (${last.grade})<br>`;
+    });
+    if (!hasData) html += "Belum ada data penilaian";
+    rankBox.innerHTML = html;
+}
+
+function showStats() {
+    if (currentIndex === null) return;
+    if (currentChart) {
+        currentChart.destroy();
+        currentChart = null;
+    }
+
+    let modal = document.getElementById("statsModal");
+    if (!modal) return;
+    
+    modal.classList.remove("hidden");
+
+    setTimeout(() => {
+        let p = db[currentIndex];
+        if (!p || p.history.length === 0) {
+            showToast("Belum ada riwayat penilaian.", true);
+            closeStats();
+            return;
+        }
+
+        let months = p.history.map(h => h.month);
+        let totals = p.history.map(h => h.total);
+        let ctx = document.getElementById("performanceChart").getContext("2d");
+
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Total Skor',
+                    data: totals,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56,189,248,0.1)',
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                scales: { y: { grid: { color: '#1f2937' }, ticks: { color: '#e5e7eb' } }, x: { ticks: { color: '#e5e7eb' } } }
+            }
+        });
+    }, 100);
+}
+
+function closeStats() {
+    let modal = document.getElementById("statsModal");
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+    if (currentChart) {
+        currentChart.destroy();
+        currentChart = null;
+    }
+}
+
+// ==================== PDF FIX UNTUK ANDROID ====================
+function generateQRDataURL(data, size = 100) {
+    try {
+        const div = document.createElement('div');
+        new QRCode(div, {
+            text: data,
+            width: size,
+            height: size,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+        const canvas = div.querySelector('canvas');
+        if (canvas) return canvas.toDataURL('image/png');
+        const img = div.querySelector('img');
+        if (img && img.src) return img.src;
+        return '';
+    } catch (e) {
+        console.log("QR Error:", e);
+        return '';
+    }
+}
+
+function applyWatermarkToAllPages(doc) {
+    let totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(40);
+        doc.setTextColor(200, 200, 200);
+        doc.setFont("helvetica", "italic");
+        doc.text("DOKUMEN RESMI", doc.internal.pageSize.width / 2, doc.internal.pageSize.height / 2, { align: "center", angle: 45 });
+        doc.setTextColor(0, 0, 0);
+    }
+}
+
+async function pdf() {
+    if (hasChange()) {
+        if (!confirm("Ada perubahan belum disimpan. Simpan dulu sebelum ekspor?")) return;
+        save();
+    }
+    
+    let p = db[currentIndex];
+    if (!p) {
+        showToast("Data belum ada", true);
+        return;
+    }
+    let last = p.history.at(-1);
+    if (!last) {
+        showToast("Personel belum memiliki riwayat penilaian", true);
+        return;
+    }
+    
+    showToast("📄 Sedang menyiapkan PDF...");
+    
+    try {
+        // Fix jsPDF untuk UMD version
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF();
+        
+        let y = 20;
+        let leftMargin = 20;
+        let pageWidth = doc.internal.pageSize.width;
+        let maxWidth = pageWidth - leftMargin - 10;
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("BADAN PERSONEL ELITE", leftMargin, y);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("Laporan Penilaian Kinerja Personel", leftMargin, y + 5);
+        doc.setFontSize(8);
+        doc.text("Dokumen Resmi – Terintegrasi Sistem Dashboard Elite", leftMargin, y + 10);
+        doc.line(leftMargin, y + 12, pageWidth - leftMargin, y + 12);
+        y += 20;
+
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("LAPORAN PENILAIAN PERIODE", leftMargin, y);
+        y += 8;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Nama Personel : " + p.name, leftMargin, y);
+        y += 6;
+        doc.text("Periode       : " + last.month, leftMargin, y);
+        y += 6;
+        doc.text("Lokasi        : " + (last.location || "-"), leftMargin, y);
+        y += 6;
+        doc.text("No. Dokumen   : " + (last.docNumber || getDocumentNumber(last)), leftMargin, y);
+        y += 6;
+        let noteText = "Catatan       : " + (last.note || "-");
+        let noteLines = doc.splitTextToSize(noteText, maxWidth);
+        doc.text(noteLines, leftMargin, y);
+        y += noteLines.length * 5 + 4;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("DETAIL PENILAIAN", leftMargin, y);
+        y += 6;
+        doc.line(leftMargin, y - 2, pageWidth - leftMargin, y - 2);
+        y += 4;
+
+        for (let idxInd = 0; idxInd < indicators.length; idxInd++) {
+            let ind = indicators[idxInd];
+            if (y > doc.internal.pageSize.height - 50) {
+                doc.addPage();
+                y = 20;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text("DETAIL PENILAIAN (lanjutan)", leftMargin, y);
+                y += 6;
+                doc.line(leftMargin, y - 2, pageWidth - leftMargin, y - 2);
+                y += 4;
+            }
+            doc.setFont("helvetica", "bold");
+            doc.text(ind.name, leftMargin, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            let pointsArr = ind.points;
+            let scoresArr = last.scores[idxInd] || [];
+            for (let j = 0; j < pointsArr.length; j++) {
+                let title = pointsArr[j].title;
+                let detail = pointsArr[j].detail;
+                let score = (scoresArr[j] !== undefined) ? scoresArr[j] : "-";
+                let titleLine = title + " : " + score;
+                doc.text(titleLine, leftMargin, y);
+                y += 4;
+                let detailLines = doc.splitTextToSize(detail, maxWidth);
+                doc.text(detailLines, leftMargin, y);
+                y += detailLines.length * 4;
+                y += 2;
+                if (y > doc.internal.pageSize.height - 30) {
+                    doc.addPage();
+                    y = 20;
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("DETAIL PENILAIAN (lanjutan)", leftMargin, y);
+                    y += 6;
+                    doc.line(leftMargin, y - 2, pageWidth - leftMargin, y - 2);
+                    y += 4;
+                }
+            }
+            y += 4;
+        }
+
+        if (y > doc.internal.pageSize.height - 40) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFont("helvetica", "bold");
+        doc.text("TOTAL SKOR : " + last.total + "  |  GRADE : " + last.grade, leftMargin, y);
+        y += 12;
+
+        if (y > doc.internal.pageSize.height - 50) {
+            doc.addPage();
+            y = 20;
+        }
+        let now = new Date();
+        let dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        let rightX = pageWidth - leftMargin;
+        doc.setFontSize(9);
+        doc.text("Dikeluarkan oleh :", leftMargin, y + 5);
+        doc.text("(_________________________)", leftMargin, y + 12);
+        doc.text("Nama & Tanda Tangan Atasan", leftMargin, y + 18);
+        let lokasi = last.location || "Lokasi tidak diisi";
+        doc.text(lokasi + ", " + dateStr, rightX, y + 5, { align: "right" });
+        doc.text("Dokumen ini ditandatangani secara elektronik", rightX, y + 30, { align: "right" });
+
+        let qrY = y + 18;
+        if (qrY > doc.internal.pageSize.height - 55) {
+            doc.addPage();
+            qrY = 20;
+        }
+        let verificationData = JSON.stringify({
+            nama: p.name,
+            periode: last.month,
+            lokasi: last.location,
+            total: last.total,
+            grade: last.grade,
+            docNumber: last.docNumber,
+            timestamp: new Date().toISOString()
+        });
+        let qrImage = generateQRDataURL(verificationData, 45);
+        if (qrImage && qrImage.startsWith("data:image")) {
+            try {
+                doc.addImage(qrImage, 'PNG', rightX - 50, qrY, 45, 45);
+            } catch(e) {
+                console.log("QR AddImage Error:", e);
+            }
+        }
+
+        applyWatermarkToAllPages(doc);
+        
+        // FIX ANDROID: Buka di tab baru instead of download langsung
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        showToast("✅ PDF berhasil dibuat, membuka tab baru...");
+        
+    } catch (error) {
+        console.error("PDF Error:", error);
+        showToast("❌ Gagal membuat PDF: " + error.message, true);
+    }
+}
+
+function pdfAll() {
+    if (db.length === 0) {
+        showToast("Belum ada data personel", true);
+        return;
+    }
+    let personsWithHistory = db.filter(p => p.history.length > 0);
+    if (personsWithHistory.length === 0) {
+        showToast("Belum ada data penilaian yang tersimpan", true);
+        return;
+    }
+    
+    showToast("📄 Menyiapkan rekap PDF...");
+    
+    try {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF();
+        let y = 20;
+        let leftMargin = 20;
+        let pageWidth = doc.internal.pageSize.width;
+        
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("REKAP PENILAIAN SEMUA PERSONEL", leftMargin, y);
+        y += 10;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Dibuat : " + new Date().toLocaleString(), leftMargin, y);
+        y += 8;
+        doc.line(leftMargin, y, pageWidth - leftMargin, y);
+        y += 6;
+
+        let sorted = [...personsWithHistory].sort((a, b) => {
+            let aLast = a.history.at(-1);
+            let bLast = b.history.at(-1);
+            return (bLast?.total || 0) - (aLast?.total || 0);
+        });
+
+        sorted.forEach((p, idx) => {
+            let last = p.history.at(-1);
+            if (!last) return;
+            if (y > doc.internal.pageSize.height - 50) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.setFont("helvetica", "bold");
+            doc.text(`${idx + 1}. ${p.name}`, leftMargin, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            doc.text(`   Periode : ${last.month}`, leftMargin, y);
+            y += 4;
+            doc.text(`   Lokasi  : ${last.location || "-"}`, leftMargin, y);
+            y += 4;
+            doc.text(`   Total   : ${last.total} | Grade : ${last.grade}`, leftMargin, y);
+            y += 8;
+        });
+        
+        applyWatermarkToAllPages(doc);
+        
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        showToast("✅ Rekap PDF berhasil dibuat");
+        
+    } catch (error) {
+        console.error("PDF All Error:", error);
+        showToast("❌ Gagal membuat rekap PDF", true);
+    }
+}
+
+function exportExcel() {
+    if (db.length === 0) {
+        showToast("Tidak ada data untuk diekspor", true);
+        return;
+    }
+    let csvRows = [];
+    csvRows.push(["Nama", "Periode", "Lokasi", "Total Skor", "Grade", "Catatan", "Terkunci", "No Dokumen"]);
+    db.forEach(p => {
+        p.history.forEach(h => {
+            csvRows.push([
+                p.name,
+                h.month,
+                h.location || "-",
+                h.total,
+                h.grade,
+                h.note || "",
+                h.locked ? "Ya" : "Tidak",
+                h.docNumber || ""
+            ]);
+        });
+    });
+    if (csvRows.length === 1) {
+        showToast("Tidak ada riwayat penilaian yang tersimpan", true);
+        return;
+    }
+    let csvContent = csvRows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    let blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    let link = document.createElement("a");
+    let url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "Riwayat_Penilaian.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast("✅ Excel berhasil diekspor");
+}
+
+renderList();
+renderRank();
+</script>
+</body>
+</html>
