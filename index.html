@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>FORM PENILAIAN · DASHBOARD ELITE</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas untuk print preview -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+*{box-sizing:border-box;}
+body{font-family:Segoe UI, system-ui;background:#0b1220;color:#e5e7eb;margin:0;padding:0;}
+body.light-mode{background:#f0f2f5;color:#1a1a2e;}
+body.light-mode .card{background:#ffffff;border:1px solid #ddd;}
+body.light-mode .header{background:#16213e;color:#38bdf8;}
+body.light-mode input,body.light-mode select,body.light-mode textarea{background:#f8f9fa;color:#1a1a2e;border:1px solid #ccc;}
+body.light-mode .analysis{background:#e9ecef;}
+.header{background:#020617;padding:12px 16px;text-align:center;color:#38bdf8;font-weight:bold;font-size:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.theme-btn{background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:5px 12px;color:#fff;cursor:pointer;font-size:11px;}
+.clock{font-family:monospace;font-size:12px;background:rgba(0,0,0,0.5);padding:4px 10px;border-radius:20px;}
+.container{padding:12px;max-width:1300px;margin:auto;}
+.card{background:#111827;padding:14px;border-radius:12px;margin-bottom:12px;border:1px solid #1f2937;}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;background:#020617;color:#fff;border:1px solid #1f2937;font-size:1rem;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:#38bdf8;color:#000;font-weight:bold;font-size:1rem;cursor:pointer;transition:opacity 0.2s;}
+button:active{opacity:0.7;}
+.point{margin-bottom:10px;border-bottom:1px dashed #1f2937;padding-bottom:6px;}
+.detail{font-size:11px;color:#94a3b8;white-space:pre-line;line-height:1.5;}
+.hidden{display:none !important;}
+.badge{padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;}
+.A{background:#22c55e;}
+.B{background:#3b82f6;}
+.C{background:#facc15;color:#000;}
+.D,.E{background:#ef4444;}
+.analysis{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.rank{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.button-group{display:flex;gap:10px;flex-wrap:wrap;}
+.button-group button{flex:1;min-width:100px;}
+.lock-badge{background:#ef4444;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.unlock-badge{background:#22c55e;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-content{background:#111827;padding:24px;border-radius:16px;width:90%;max-width:550px;text-align:center;pointer-events:auto;max-height:85vh;overflow-y:auto;}
+canvas{touch-action:manipulation;max-width:100%;height:auto;}
+.toast-message{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:10px 20px;border-radius:30px;font-weight:bold;z-index:2000;animation:fadeOut 2s ease forwards;pointer-events:none;}
+@keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
+.settings-card{background:#1e293b;margin-bottom:12px;}
+.settings-card label{font-size:12px;color:#94a3b8;display:block;margin-top:8px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:15px;}
+.stat-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px;padding:12px;text-align:center;}
+.stat-card h3{font-size:24px;margin:5px 0;}
+.stat-card p{font-size:11px;color:#94a3b8;margin:0;}
+.filter-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+.filter-bar input,.filter-bar select{flex:1;min-width:100px;margin-top:0;}
+.dashboard-charts{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;}
+@media (max-width:640px){
+    .dashboard-charts{grid-template-columns:1fr;}
+    .container{padding:8px;}
+    .button-group{flex-direction:column;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+}
+/* PDF Preview Styles */
+.preview-container{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:2000;overflow:auto;padding:20px;}
+.preview-paper{background:white;margin:0 auto;box-shadow:0 0 20px rgba(0,0,0,0.5);position:relative;}
+.preview-controls{position:sticky;top:10px;background:#1e293b;padding:10px;border-radius:8px;margin-bottom:15px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;z-index:2001;}
+.preview-controls button{width:auto;margin:0;}
+.watermark-slider{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.watermark-slider input{flex:1;margin:0;}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <span>⚔️ DASHBOARD PENILAIAN ELITE</span>
+        <div class="clock" id="clock"></div>
+    </div>
+    <div class="header-right">
+        <button class="theme-btn" onclick="toggleTheme('dark')">🌙</button>
+        <button class="theme-btn" onclick="toggleTheme('light')">☀️</button>
+    </div>
+</div>
+
+<div class="container">
+
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h3>🔐 AKSES SISTEM</h3>
+        <select id="roleSelect" style="margin:12px 0;">
+            <option value="admin">Admin (Akses Penuh)</option>
+            <option value="supervisor">Supervisor (Baca & Tambah)</option>
+        </select>
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="loginBtn">MASUK</button>
+        <div id="loginError" style="color:#f87171; margin-top:10px; font-size:12px;"></div>
+        <div style="margin-top:12px; font-size:11px; color:#6b7280;">admin: admin123 / supervisor: spv123</div>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <div id="listView">
+        <div class="card settings-card">
+            <div style="font-weight:bold; margin-bottom:8px;">⚙️ PENGATURAN DOKUMEN</div>
+            <input type="text" id="customHeaderInput" placeholder="Nama Instansi" value="BADAN PERSONEL ELITE">
+            <label>🏢 Nama Instansi (di PDF)</label>
+            
+            <input type="text" id="customWatermarkInput" placeholder="Teks Watermark" value="DOKUMEN RESMI">
+            <label>💧 Teks Watermark</label>
+            
+            <div class="watermark-slider">
+                <span>🎨 Transparansi Watermark:</span>
+                <input type="range" id="watermarkOpacity" min="0" max="100" value="30">
+                <span id="opacityValue">30%</span>
+            </div>
+            
+            <textarea id="customFooterInput" rows="2" placeholder="Teks Footer (akan muncul di setiap halaman PDF)">Dokumen ini merupakan bukti penilaian resmi yang telah tervalidasi secara elektronik.</textarea>
+            <label>📝 Custom Footer</label>
+            
+            <select id="pdfPaperSize">
+                <option value="a4">A4 (210 x 297 mm)</option>
+                <option value="f4">F4 (210 x 330 mm)</option>
+                <option value="letter">Letter (216 x 279 mm)</option>
+            </select>
+            <label>📄 Ukuran Kertas PDF</label>
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <input type="number" id="thresholdMin" placeholder="Nilai Minimal" value="60" style="width:50%;">
+                <button onclick="setThreshold()" style="width:50%; margin-top:0;">Set Threshold</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsDashboard">
+            <div class="stat-card"><p>👥 TOTAL PERSONEL</p><h3 id="statTotalPersonel">0</h3></div>
+            <div class="stat-card"><p>⭐ RATA-RATA SKOR</p><h3 id="statAvgScore">0</h3></div>
+            <div class="stat-card"><p>🏆 GRADE A</p><h3 id="statGradeA">0</h3></div>
+            <div class="stat-card"><p>⚠️ GRADE E</p><h3 id="statGradeE">0</h3></div>
+            <div class="stat-card"><p>📊 TOTAL PENILAIAN</p><h3 id="statTotalAssessments">0</h3></div>
+            <div class="stat-card"><p>🏅 TERBAIK</p><h3 id="statTopPersonel">-</h3></div>
+        </div>
+        
+        <div class="dashboard-charts">
+            <div class="card"><canvas id="pieChartGrade" width="200" height="150"></canvas></div>
+            <div class="card"><canvas id="barChartPerform" width="200" height="150"></canvas></div>
+        </div>
+        
+        <div id="thresholdAlert" class="threshold-alert hidden" style="background:#ef4444;color:#fff;padding:8px;border-radius:8px;margin-bottom:10px;"></div>
+        
+        <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="🔍 Cari personel..." onkeyup="filterPersonel()">
+            <select id="gradeFilter" onchange="filterPersonel()">
+                <option value="">Semua Grade</option>
+                <option value="A">Grade A</option><option value="B">Grade B</option>
+                <option value="C">Grade C</option><option value="D">Grade D</option><option value="E">Grade E</option>
+            </select>
+            <select id="periodFilter" onchange="filterPersonel()"><option value="">Semua Periode</option></select>
+            <button onclick="resetFilters()" style="width:auto; margin-top:0;">Reset</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="addPerson()">➕ Tambah</button>
+            <button onclick="pdfAll()">📑 Rekap Semua</button>
+            <button onclick="exportExcel()">📎 Excel</button>
+        </div>
+        
+        <div id="personList"></div>
+        <div id="rankBox" class="rank"></div>
+    </div>
+
+    <div id="detailView" class="hidden">
+        <div class="button-group">
+            <button onclick="back()">⬅️ Kembali</button>
+            <button id="deleteBtn" onclick="deletePerson()">🗑️ Hapus</button>
+            <button id="lockBtn" onclick="toggleLock()">🔒 Kunci</button>
+        </div>
+        <div class="card">
+            <input id="name" placeholder="Nama Personel">
+            <input id="month" placeholder="Periode (contoh: Januari 2026)">
+            <input id="location" placeholder="Lokasi Penilaian">
+        </div>
+        <div class="card">
+            <textarea id="noteBox" placeholder="Catatan (KRITIS, BAHAYA, PERHATIAN, AMAN akan di-highlight)"></textarea>
+        </div>
+        <div id="indicators"></div>
+        <button id="saveBtn" onclick="save()">💾 SIMPAN</button>
+        <button onclick="pdf()">📄 Export PDF</button>
+        <button onclick="showPrintPreview()">🖨️ Print Preview PDF</button>
+        <button onclick="showStats()">📊 Grafik</button>
+        <div id="analysisBox" class="analysis"></div>
+    </div>
+</div>
+
+<div id="statsModal" class="modal hidden">
+    <div class="modal-content"><h3>📈 GRAFIK PERFORMA</h3><canvas id="performanceChart" width="600" height="300"></canvas><button onclick="closeStats()">Tutup</button></div>
+</div>
+
+<div id="previewModal" class="hidden">
+    <div class="preview-container" id="previewContainer">
+        <div class="preview-controls">
+            <button onclick="closePrintPreview()">✖️ Tutup Preview</button>
+            <button onclick="printPreviewPDF()">🖨️ Print / Save PDF</button>
+        </div>
+        <div id="previewPaper" class="preview-paper"></div>
+    </div>
+</div>
+
+<script>
+// ==================== PAPER SIZE CONFIG ====================
+function getPaperSize() {
+    let size = document.getElementById("pdfPaperSize")?.value || "a4";
+    const sizes = {
+        a4: { width: 210, height: 297, unit: "mm" },
+        f4: { width: 210, height: 330, unit: "mm" },
+        letter: { width: 216, height: 279, unit: "mm" }
+    };
+    return sizes[size] || sizes.a4;
+}
+
+// ==================== THRESHOLD ALERT ====================
+let thresholdMin = parseInt(localStorage.getItem("thresholdMin") || "60");
+function setThreshold(){
+    let val = parseInt(document.getElementById("thresholdMin").value);
+    if(!isNaN(val)) { thresholdMin = val; localStorage.setItem("thresholdMin", val); showToast(`✅ Threshold nilai minimal: ${val}`); checkThresholdAlerts(); }
+}
+function checkThresholdAlerts(){
+    let alertDiv = document.getElementById("thresholdAlert");
+    let lowPerformers = [];
+    db.forEach(p => {
+        let last = p.history.at(-1);
+        if(last && last.total < thresholdMin) lowPerformers.push(`${p.name} (${last.total})`);
+    });
+    if(lowPerformers.length > 0){
+        alertDiv.innerHTML = `⚠️ PERINGATAN: ${lowPerformers.length} personel di bawah threshold (${thresholdMin})<br>${lowPerformers.join(', ')}`;
+        alertDiv.classList.remove("hidden");
+    } else { alertDiv.classList.add("hidden"); }
+}
+
+// ==================== THEME & CLOCK ====================
+function toggleTheme(theme) {
+    document.body.className = theme === 'dark' ? '' : theme;
+    localStorage.setItem("theme", theme);
+}
+function startClock() { setInterval(() => { let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleTimeString('id-ID'); }, 1000); }
+let savedTheme = localStorage.getItem("theme");
+if(savedTheme && savedTheme!=='dark') toggleTheme(savedTheme);
+
+// ==================== MULTI USER ====================
+let currentRole = null, loginLocked = false, statsModalInitialized = false, currentChart = null;
+function showToast(msg, isErr=false) { let t=document.createElement('div'); t.className='toast-message'; t.textContent=msg; if(isErr) t.style.background='#ef4444'; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
+function initStatsModalEvents() { if(statsModalInitialized) return; let m=document.getElementById("statsModal"); if(!m) return; m.addEventListener("click",e=>{if(e.target===m)closeStats();}); statsModalInitialized=true; }
+function checkLogin() {
+    if(loginLocked) return;
+    loginLocked=true;
+    let pwd=document.getElementById("loginPassword").value, role=document.getElementById("roleSelect").value;
+    if((role==='admin' && pwd==='admin123') || (role==='supervisor' && pwd==='spv123')) {
+        currentRole=role;
+        document.getElementById("loginModal").remove();
+        document.getElementById("mainApp").classList.remove("hidden");
+        initStatsModalEvents();
+        renderList(); renderRank(); applyRoleUI(); updateDashboardStats(); populatePeriodFilter(); startClock(); updateCharts(); checkThresholdAlerts();
+        showToast("✅ Login berhasil!");
+    } else { loginLocked=false; document.getElementById("loginError").innerText="Password salah!"; }
+}
+document.getElementById("loginBtn").addEventListener("click", checkLogin);
+function applyRoleUI() { let isAdmin=(currentRole==='admin'); let d=document.getElementById("deleteBtn"), l=document.getElementById("lockBtn"); if(d) d.style.display=isAdmin?"block":"none"; if(l) l.style.display=isAdmin?"block":"none"; }
+
+// ==================== DATA MODEL ====================
+let db = JSON.parse(localStorage.getItem("dbElite") || "[]");
+let currentIndex = null;
+const nameInput=document.getElementById("name"), monthInput=document.getElementById("month"), locationInput=document.getElementById("location"), noteBox=document.getElementById("noteBox");
+function saveDB() { localStorage.setItem("dbElite",JSON.stringify(db)); updateDashboardStats(); populatePeriodFilter(); renderList(); renderRank(); updateCharts(); checkThresholdAlerts(); }
+function convert(v) { return {A:5,B:4,C:3,D:2,E:1}[v]; }
+
+let indicators = [
+    { name: "Discipline & Attendance", points: [
+        { title: "Kehadiran sesuai jadwal kerja", detail: "• Hadir sesuai jadwal kerja yang telah ditetapkan\n• Tidak melakukan mangkir atau absensi fiktif\n• Menunjukkan konsistensi kehadiran" },
+        { title: "Ketepatan waktu", detail: "• Datang sebelum atau tepat pada waktu yang ditentukan\n• Tidak terlambat saat pergantian shift\n• Siap melaksanakan tugas saat jam kerja dimulai" },
+        { title: "Tidak meninggalkan pos", detail: "• Tetap berada di area tanggung jawab selama jam tugas\n• Tidak meninggalkan pos tanpa izin resmi\n• Siap siaga saat dibutuhkan" },
+        { title: "Kepatuhan jam kerja", detail: "• Mematuhi jadwal kerja sesuai ketentuan\n• Tidak pulang sebelum waktunya\n• Tidak melanggar sistem shift" }
+    ] },
+    { name: "SOP Compliance", points: [
+        { title: "Kepatuhan SOP", detail: "• Menjalankan prosedur operasional sesuai standar\n• Tidak melakukan penyimpangan prosedur\n• Memahami SOP dengan baik" },
+        { title: "Penggunaan APD", detail: "• Menggunakan APD sesuai standar keselamatan\n• Tidak mengabaikan perlindungan diri\n• Menggunakan APD secara benar dan konsisten" },
+        { title: "Tidak melanggar prosedur", detail: "• Tidak melakukan tindakan di luar prosedur\n• Tidak mengambil keputusan tanpa dasar\n• Menghindari tindakan berisiko tinggi" },
+        { title: "Menjalankan instruksi", detail: "• Melaksanakan instruksi kerja dengan tepat\n• Tidak membangkang terhadap perintah\n• Responsif terhadap arahan atasan" }
+    ] },
+    { name: "Professional Competence", points: [
+        { title: "Pemahaman tugas", detail: "• Menguasai tugas pokok dan fungsi\n• Tidak mengalami kebingungan dalam bekerja\n• Memahami area tanggung jawab" },
+        { title: "Komunikasi", detail: "• Menyampaikan informasi dengan jelas dan sistematis\n• Menghindari miskomunikasi\n• Berkomunikasi efektif dengan tim" },
+        { title: "Handling insiden", detail: "• Mampu menangani insiden sesuai prosedur\n• Tidak panik dalam kondisi darurat\n• Mengambil tindakan yang tepat" },
+        { title: "Decision making", detail: "• Mengambil keputusan secara cepat dan tepat\n• Tidak ragu dalam situasi kritis\n• Berdasarkan logika dan SOP" }
+    ] },
+    { name: "Patrol Performance", points: [
+        { title: "Patroli sesuai jadwal", detail: "• Melaksanakan patroli sesuai jadwal\n• Tidak melewatkan waktu patroli\n• Konsisten dalam pelaksanaan" },
+        { title: "Checkpoint", detail: "• Melakukan pengecekan seluruh titik kontrol\n• Tidak ada checkpoint yang terlewat\n• Validasi dilakukan dengan benar" },
+        { title: "Tidak ada area miss", detail: "• Seluruh area tercover dengan baik\n• Tidak ada blind spot\n• Patroli dilakukan secara menyeluruh" },
+        { title: "Laporan akurat", detail: "• Laporan sesuai kondisi nyata\n• Tidak manipulasi data\n• Informasi lengkap dan jelas" }
+    ] },
+    { name: "Risk Awareness", points: [
+        { title: "Identifikasi risiko", detail: "• Mampu mengenali potensi bahaya\n• Tidak mengabaikan risiko\n• Proaktif dalam pengamatan" },
+        { title: "Kewaspadaan", detail: "• Selalu dalam kondisi siaga\n• Tidak lengah selama bertugas\n• Fokus terhadap lingkungan sekitar" },
+        { title: "Respons bahaya", detail: "• Cepat merespon kondisi berbahaya\n• Tidak menunda tindakan\n• Bertindak sesuai SOP" },
+        { title: "Pelaporan", detail: "• Melaporkan kejadian tepat waktu\n• Tidak menutup-nutupi kejadian\n• Informasi akurat dan jelas" }
+    ] },
+    { name: "Work Attitude", points: [
+        { title: "Sikap kerja", detail: "• Menunjukkan sikap profesional\n• Tidak malas atau acuh\n• Memiliki etos kerja tinggi" },
+        { title: "Stabil emosi", detail: "• Tidak mudah terpancing emosi\n• Tetap tenang dalam tekanan\n• Tidak konflik dengan rekan kerja" },
+        { title: "Tanggung jawab", detail: "• Menyelesaikan tugas dengan baik\n• Tidak melempar kesalahan\n• Bertanggung jawab penuh" },
+        { title: "Etika", detail: "• Bersikap sopan terhadap semua pihak\n• Tidak arogan\n• Menjaga nama baik perusahaan" }
+    ] },
+    { name: "Teamwork & Command", points: [
+        { title: "Kerja tim", detail: "• Mampu bekerja sama secara efektif\n• Tidak egois\n• Mendukung rekan kerja" },
+        { title: "Kepatuhan", detail: "• Patuh terhadap atasan\n• Tidak membangkang\n• Mengikuti arahan" },
+        { title: "Koordinasi", detail: "• Komunikasi antar personel berjalan baik\n• Tidak terjadi miskomunikasi\n• Sinkron dalam pelaksanaan tugas" },
+        { title: "Disiplin perintah", detail: "• Tidak melanggar instruksi\n• Tidak menunda perintah\n• Menjalankan tugas secara tepat" }
+    ] }
+];
+
+function renderIndicators(defaultVal) {
+    let box=document.getElementById("indicators"); if(!box) return;
+    box.innerHTML="";
+    indicators.forEach((ind,i)=>{
+        let html=`<div class="card"><b>${ind.name}</b>`;
+        ind.points.forEach((p,j)=>{ html+=`<div class="point">${p.title}<br><span class="detail">${p.detail}</span><select data-ind="${i}" data-point="${j}"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>`; });
+        html+="</div>";
+        box.innerHTML+=html;
+    });
+    if(defaultVal) document.querySelectorAll("select").forEach(s=>s.value=defaultVal);
+}
+function getScores() { let scores=[], total=0; indicators.forEach((ind,i)=>{ let s=document.querySelectorAll(`select[data-ind='${i}']`); let arr=[]; s.forEach(x=>{ arr.push(x.value); total+=convert(x.value); }); scores.push(arr); }); return {scores,total}; }
+function toggleLock() { if(currentRole!=='admin') return showToast("Hanya admin!",true); if(currentIndex===null) return; let p=db[currentIndex], last=p.history.at(-1); if(!last) return; last.locked=!last.locked; saveDB(); renderList(); renderRank(); openDetail(currentIndex); showToast(last.locked?"🔒 Terkunci":"🔓 Tidak terkunci"); }
+function getDocumentNumber() { return `DOC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*10000)}`; }
+function save() {
+    if(!nameInput.value||!monthInput.value) return showToast("Nama dan Periode harus diisi!",true);
+    if(!locationInput.value) return showToast("Lokasi wajib diisi!",true);
+    let {scores,total}=getScores();
+    let max=indicators.reduce((a,b)=>a+b.points.length,0)*5;
+    let persen=(total/max)*100;
+    let grade=persen>=85?"A":persen>=70?"B":persen>=50?"C":persen>=30?"D":"E";
+    if(currentIndex===null){ db.push({name:nameInput.value,history:[]}); currentIndex=db.length-1; }
+    let p=db[currentIndex]; p.name=nameInput.value;
+    let existing=p.history.find(h=>h.month===monthInput.value&&h.location===locationInput.value);
+    if(existing){
+        if(existing.locked&&currentRole!=='admin') return showToast("Data terkunci!",true);
+        if(!confirm("Periode dan lokasi sudah ada. Timpa?")) return;
+        Object.assign(existing,{month:monthInput.value,location:locationInput.value,total,grade,note:noteBox.value,scores,locked:existing.locked||false,docNumber:existing.docNumber||getDocumentNumber()});
+    } else { p.history.push({month:monthInput.value,location:locationInput.value,total,grade,note:noteBox.value,scores,locked:false,docNumber:getDocumentNumber()}); }
+    saveDB(); back(); renderList(); renderRank();
+    showToast("✅ Data tersimpan!");
+}
+function deletePerson() { if(currentRole!=='admin') return showToast("Hanya admin!",true); if(!confirm("Hapus personel?")) return; db.splice(currentIndex,1); saveDB(); back(); renderList(); renderRank(); showToast("🗑️ Dihapus"); }
+function back() { document.getElementById("listView").classList.remove("hidden"); document.getElementById("detailView").classList.add("hidden"); }
+function addPerson() { currentIndex=null; document.getElementById("listView").classList.add("hidden"); document.getElementById("detailView").classList.remove("hidden"); renderIndicators("C"); nameInput.value=monthInput.value=locationInput.value=noteBox.value=""; nameInput.disabled=monthInput.disabled=locationInput.disabled=noteBox.disabled=false; document.querySelectorAll("select").forEach(s=>s.disabled=false); document.getElementById("saveBtn").disabled=false; }
+function openDetail(i) {
+    currentIndex=i; document.getElementById("listView").classList.add("hidden"); document.getElementById("detailView").classList.remove("hidden"); renderIndicators();
+    let p=db[i]; nameInput.value=p.name;
+    let last=p.history.at(-1);
+    if(last){
+        monthInput.value=last.month; locationInput.value=last.location||""; noteBox.value=last.note;
+        last.scores.forEach((arr,i)=>{ let s=document.querySelectorAll(`select[data-ind='${i}']`); arr.forEach((v,j)=>{ if(s[j]) s[j].value=v; }); });
+        if(last.locked&&currentRole!=='admin'){ nameInput.disabled=monthInput.disabled=locationInput.disabled=noteBox.disabled=true; document.querySelectorAll("select").forEach(s=>s.disabled=true); document.getElementById("saveBtn").disabled=true; }
+        else{ nameInput.disabled=monthInput.disabled=locationInput.disabled=noteBox.disabled=false; document.querySelectorAll("select").forEach(s=>s.disabled=false); document.getElementById("saveBtn").disabled=false; }
+    }
+}
+
+// ==================== DASHBOARD & FILTER ====================
+function updateDashboardStats(){
+    let totalPersonel=db.length, totalAssessments=db.reduce((s,p)=>s+p.history.length,0), allScores=[], gradeA=0, gradeE=0;
+    db.forEach(p=>{ let l=p.history.at(-1); if(l){ allScores.push(l.total); if(l.grade==='A') gradeA++; if(l.grade==='E') gradeE++; } });
+    let avg=allScores.length?(allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1):0;
+    let best=db.reduce((b,p)=>{ let l=p.history.at(-1); if(!l) return b; if(!b||l.total>b.total) return {name:p.name,total:l.total}; return b; },null);
+    document.getElementById("statTotalPersonel").innerText=totalPersonel;
+    document.getElementById("statAvgScore").innerText=avg;
+    document.getElementById("statGradeA").innerText=gradeA;
+    document.getElementById("statGradeE").innerText=gradeE;
+    document.getElementById("statTotalAssessments").innerText=totalAssessments;
+    document.getElementById("statTopPersonel").innerHTML=best?`${best.name}<br><small>${best.total} pts</small>`:"-";
+}
+function populatePeriodFilter(){
+    let periods=new Set(); db.forEach(p=>p.history.forEach(h=>periods.add(h.month)));
+    let sel=document.getElementById("periodFilter"); if(!sel) return;
+    let cur=sel.value; sel.innerHTML='<option value="">Semua Periode</option>';
+    Array.from(periods).sort().forEach(p=>{ sel.innerHTML+=`<option value="${p}">${p}</option>`; });
+    sel.value=cur;
+}
+let filteredDb=[];
+function filterPersonel(){
+    let search=document.getElementById("searchInput").value.toLowerCase();
+    let grade=document.getElementById("gradeFilter").value;
+    let period=document.getElementById("periodFilter").value;
+    filteredDb=db.filter(p=>{
+        if(search&&!p.name.toLowerCase().includes(search)) return false;
+        let l=p.history.at(-1);
+        if(grade&&(!l||l.grade!==grade)) return false;
+        if(period&&(!l||l.month!==period)) return false;
+        return true;
+    });
+    let pl=document.getElementById("personList"); if(!pl) return;
+    pl.innerHTML="";
+    if(filteredDb.length===0){ pl.innerHTML="<div class='card'>Tidak ada data</div>"; return; }
+    filteredDb.forEach(p=>{
+        let origIdx=db.findIndex(orig=>orig.name===p.name);
+        let l=p.history.at(-1);
+        pl.innerHTML+=`<div class="card"><b>${escapeHtml(p.name)}</b><br>${l?.month||"-"} - ${l?.location||"-"} <span class="badge ${l?.grade||""}">${l?.grade||"-"}</span>${l?.locked?'<span class="lock-badge">🔒</span>':'<span class="unlock-badge">🔓</span>'}<button onclick="openDetail(${origIdx})">Detail</button></div>`;
+    });
+}
+function resetFilters(){ document.getElementById("searchInput").value=""; document.getElementById("gradeFilter").value=""; document.getElementById("periodFilter").value=""; filterPersonel(); }
+function renderList(){ filterPersonel(); }
+function renderRank(){
+    let r=document.getElementById("rankBox"); if(!r) return;
+    let sorted=[...db].sort((a,b)=>(b.history.at(-1)?.total||0)-(a.history.at(-1)?.total||0));
+    let html="<b>🏆 RANKING (penilaian terakhir)</b><br>", has=false;
+    sorted.forEach((p,i)=>{ let l=p.history.at(-1); if(l){ has=true; html+=`${i+1}. ${escapeHtml(p.name)} – ${l.total} (${l.grade})<br>`; } });
+    r.innerHTML=has?html:"Belum ada data penilaian";
+}
+function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g,m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+function showStats(){
+    if(currentIndex===null) return; if(currentChart) currentChart.destroy();
+    let m=document.getElementById("statsModal"); m.classList.remove("hidden");
+    setTimeout(()=>{
+        let p=db[currentIndex]; if(!p||p.history.length===0){ showToast("Belum ada riwayat",true); closeStats(); return; }
+        let ctx=document.getElementById("performanceChart").getContext("2d");
+        currentChart=new Chart(ctx,{type:'line',data:{labels:p.history.map(h=>h.month),datasets:[{label:'Total Skor',data:p.history.map(h=>h.total),borderColor:'#38bdf8',fill:true}]},options:{responsive:true,maintainAspectRatio:true}});
+    },100);
+}
+function closeStats(){ document.getElementById("statsModal").classList.add("hidden"); if(currentChart){ currentChart.destroy(); currentChart=null; } }
+
+// ==================== CHARTS ====================
+let pieChart = null, barChart = null;
+function updateCharts(){
+    let gradeCount = { A:0, B:0, C:0, D:0, E:0 };
+    let personScores = [];
+    db.forEach(p => {
+        let last = p.history.at(-1);
+        if(last){
+            gradeCount[last.grade]++;
+            personScores.push({ name: p.name, score: last.total });
+        }
+    });
+    if(pieChart) pieChart.destroy();
+    let ctxPie = document.getElementById("pieChartGrade").getContext("2d");
+    pieChart = new Chart(ctxPie, {
+        type: 'pie',
+        data: { labels: ['A','B','C','D','E'], datasets: [{ data: [gradeCount.A, gradeCount.B, gradeCount.C, gradeCount.D, gradeCount.E], backgroundColor: ['#22c55e','#3b82f6','#facc15','#ef4444','#ef4444'] }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#e5e7eb' } } } }
+    });
+    if(barChart) barChart.destroy();
+    let ctxBar = document.getElementById("barChartPerform").getContext("2d");
+    let top5 = personScores.sort((a,b)=>b.score-a.score).slice(0,5);
+    barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: { labels: top5.map(p=>p.name.length>10?p.name.slice(0,10)+'..':p.name), datasets: [{ label: 'Total Skor', data: top5.map(p=>p.score), backgroundColor: '#38bdf8' }] },
+        options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: 140 } }, plugins: { legend: { labels: { color: '#e5e7eb' } } } }
+    });
+}
+
+// ==================== PDF GENERATION ====================
+function generateQRDataURL(data,size=100){ try{ let div=document.createElement('div'); new QRCode(div,{text:data,width:size,height:size}); let c=div.querySelector('canvas'); return c?c.toDataURL('image/png'):''; }catch(e){ return ''; } }
+
+function getPDFConfig() {
+    let paperSize = getPaperSize();
+    let orientation = "portrait";
+    let unit = "mm";
+    let format = [paperSize.width, paperSize.height];
+    return { orientation, unit, format };
+}
+
+async function pdf(){
+    if(currentIndex===null) return showToast("Pilih personel terlebih dahulu",true);
+    let p=db[currentIndex]; if(!p) return showToast("Data belum ada",true);
+    let last=p.history.at(-1); if(!last) return showToast("Belum ada riwayat",true);
+    showToast("📄 Menyiapkan PDF...");
+    try{
+        const {jsPDF}=window.jspdf;
+        let config = getPDFConfig();
+        let doc = new jsPDF(config);
+        let y=20, left=20, w=doc.internal.pageSize.width;
+        let customHeader=document.getElementById("customHeaderInput")?.value||"BADAN PERSONEL ELITE";
+        let customWatermark=document.getElementById("customWatermarkInput")?.value||"DOKUMEN RESMI";
+        let customFooter=document.getElementById("customFooterInput")?.value||"Dokumen ini merupakan bukti penilaian resmi.";
+        let watermarkOpacity = parseInt(document.getElementById("watermarkOpacity")?.value || "30") / 100;
+        
+        // Header
+        doc.setFillColor(2,6,23); doc.rect(0,0,w,35,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(16); doc.setFont("helvetica","bold"); doc.text(customHeader,left,18);
+        doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.text("Laporan Penilaian Kinerja Personel",left,28);
+        doc.setTextColor(0,0,0); y=45;
+        
+        // Info Personel
+        doc.setFontSize(12); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("LAPORAN PENILAIAN PERIODE",left,y); doc.setTextColor(0,0,0); y+=8;
+        doc.setFontSize(10); doc.setFont("helvetica","normal");
+        doc.text("Nama Personel : "+p.name,left,y); y+=6;
+        doc.text("Periode       : "+last.month,left,y); y+=6;
+        doc.text("Lokasi        : "+(last.location||"-"),left,y); y+=6;
+        doc.text("No. Dokumen   : "+(last.docNumber||getDocumentNumber()),left,y); y+=6;
+        
+        let noteText="Catatan       : "+(last.note||"-");
+        let noteLines=doc.splitTextToSize(noteText,w-left-10);
+        doc.text(noteLines,left,y); y+=noteLines.length*5+4;
+        
+        // Detail Penilaian
+        doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("DETAIL PENILAIAN",left,y); doc.setTextColor(0,0,0); y+=6; doc.line(left,y-2,w-left,y-2); y+=4;
+        
+        for(let idx=0; idx<indicators.length; idx++){
+            let ind=indicators[idx];
+            if(y>doc.internal.pageSize.height-50){ doc.addPage(); y=20; doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("DETAIL PENILAIAN (lanjutan)",left,y); doc.setTextColor(0,0,0); y+=6; doc.line(left,y-2,w-left,y-2); y+=4; }
+            doc.setFont("helvetica","bold"); doc.setTextColor(200,200,255); doc.text(ind.name,left,y); doc.setTextColor(0,0,0); y+=5; doc.setFont("helvetica","normal");
+            let pointsArr=ind.points, scoresArr=last.scores[idx]||[];
+            for(let j=0; j<pointsArr.length; j++){
+                let title=pointsArr[j].title, detail=pointsArr[j].detail, score=scoresArr[j]||"-";
+                if(score==='D'||score==='E'){ doc.setTextColor(255,100,100); doc.setFont("helvetica","bold"); }
+                else{ doc.setTextColor(0,0,0); doc.setFont("helvetica","normal"); }
+                doc.text(title+" : "+score,left,y); y+=4;
+                let detailLines=doc.splitTextToSize(detail,w-left-10); doc.text(detailLines,left,y); y+=detailLines.length*4+2;
+                if(y>doc.internal.pageSize.height-50){ doc.addPage(); y=20; doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("DETAIL PENILAIAN (lanjutan)",left,y); doc.setTextColor(0,0,0); y+=6; doc.line(left,y-2,w-left,y-2); y+=4; }
+            } y+=4;
+        }
+        
+        // Total dan Grade
+        if(y>doc.internal.pageSize.height-50){ doc.addPage(); y=20; }
+        doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("TOTAL SKOR : "+last.total+"  |  GRADE : "+last.grade,left,y); doc.setTextColor(0,0,0); y+=12;
+        
+        // Footer dan Tanda Tangan
+        let now=new Date(); let dateStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+        let rightX=w-left;
+        doc.setFontSize(9);
+        doc.text("Dikeluarkan oleh :",left,y+5);
+        doc.text("(_________________________)",left,y+12);
+        doc.text("Nama & Tanda Tangan Atasan",left,y+18);
+        doc.text((last.location||"Lokasi tidak diisi")+", "+dateStr,rightX,y+5,{align:"right"});
+        
+        // QR Code
+        let qrY=y+18;
+        let qrImage=generateQRDataURL(JSON.stringify({nama:p.name,periode:last.month,lokasi:last.location,total:last.total,grade:last.grade,docNumber:last.docNumber,timestamp:new Date().toISOString()}),45);
+        if(qrImage && qrImage.startsWith("data:image")){ try{ doc.addImage(qrImage,'PNG',rightX-50,qrY,45,45); }catch(e){} }
+        
+        // Watermark di setiap halaman
+        for(let i=1;i<=doc.internal.getNumberOfPages();i++){ 
+            doc.setPage(i); 
+            doc.setFontSize(50); 
+            doc.setTextColor(180,180,180); 
+            doc.setFont("helvetica","italic"); 
+            doc.setTextColor(180,180,180, watermarkOpacity * 255);
+            doc.text(customWatermark, doc.internal.pageSize.width/2, doc.internal.pageSize.height/2, {align:"center", angle:45}); 
+        }
+        
+        // Footer teks di setiap halaman
+        for(let i=1;i<=doc.internal.getNumberOfPages();i++){
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(100,100,100);
+            let footerY = doc.internal.pageSize.height - 10;
+            doc.text(customFooter, doc.internal.pageSize.width/2, footerY, {align:"center"});
+        }
+        
+        let pdfBlob=doc.output('blob'); let url=URL.createObjectURL(pdfBlob); window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),1000);
+        showToast("✅ PDF selesai!");
+    } catch(e){ console.error(e); showToast("❌ Gagal buat PDF",true); }
+}
+
+async function pdfAll(){
+    let toExport=db.filter(p=>p.history.length>0);
+    if(toExport.length===0) return showToast("Belum ada data",true);
+    showToast("📄 Menyiapkan rekap...");
+    try{
+        const {jsPDF}=window.jspdf;
+        let config = getPDFConfig();
+        let doc = new jsPDF(config);
+        let y=20, left=20, w=doc.internal.pageSize.width;
+        let customHeader=document.getElementById("customHeaderInput")?.value||"BADAN PERSONEL ELITE";
+        let customWatermark=document.getElementById("customWatermarkInput")?.value||"DOKUMEN RESMI";
+        let customFooter=document.getElementById("customFooterInput")?.value||"Dokumen resmi sistem penilaian.";
+        let watermarkOpacity = parseInt(document.getElementById("watermarkOpacity")?.value || "30") / 100;
+        
+        doc.setFillColor(2,6,23); doc.rect(0,0,w,35,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(16); doc.text(customHeader,left,18);
+        doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text("Rekap Penilaian Semua Personel",left,28);
+        doc.setFontSize(8); doc.text("Dibuat : "+new Date().toLocaleString(),left,34);
+        doc.setTextColor(0,0,0); y=45;
+        
+        let sorted=[...toExport].sort((a,b)=>(b.history.at(-1)?.total||0)-(a.history.at(-1)?.total||0));
+        sorted.forEach((p,idx)=>{ 
+            let l=p.history.at(-1); 
+            if(!l) return; 
+            if(y>doc.internal.pageSize.height-40){ doc.addPage(); y=20; } 
+            doc.setFont("helvetica","bold"); doc.text(`${idx+1}. ${p.name}`,left,y); y+=5; 
+            doc.setFont("helvetica","normal"); 
+            doc.text(`   Periode : ${l.month}`,left,y); y+=4; 
+            doc.text(`   Lokasi  : ${l.location||"-"}`,left,y); y+=4; 
+            doc.text(`   Total   : ${l.total} | Grade : ${l.grade}`,left,y); y+=8; 
+        });
+        
+        for(let i=1;i<=doc.internal.getNumberOfPages();i++){ 
+            doc.setPage(i); 
+            doc.setFontSize(50); 
+            doc.setTextColor(180,180,180, watermarkOpacity * 255);
+            doc.setFont("helvetica","italic"); 
+            doc.text(customWatermark, doc.internal.pageSize.width/2, doc.internal.pageSize.height/2, {align:"center", angle:45}); 
+            doc.setFontSize(8);
+            doc.setTextColor(100,100,100);
+            doc.text(customFooter, doc.internal.pageSize.width/2, doc.internal.pageSize.height-10, {align:"center"});
+        }
+        
+        let pdfBlob=doc.output('blob'); let url=URL.createObjectURL(pdfBlob); window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),1000);
+        showToast("✅ Rekap selesai!");
+    } catch(e){ console.error(e); showToast("❌ Gagal buat rekap",true); }
+}
+
+// ==================== PRINT PREVIEW ====================
+async function showPrintPreview() {
+    if(currentIndex===null) return showToast("Pilih personel terlebih dahulu",true);
+    let p=db[currentIndex]; if(!p) return showToast("Data belum ada",true);
+    let last=p.history.at(-1); if(!last) return showToast("Belum ada riwayat",true);
+    
+    let modal = document.getElementById("previewModal");
+    let previewPaper = document.getElementById("previewPaper");
+    modal.classList.remove("hidden");
+    
+    let paperSize = getPaperSize();
+    let paperWidth = paperSize.width;
+    let paperHeight = paperSize.height;
+    let scale = Math.min(window.innerWidth * 0.8 / paperWidth, 800 / paperHeight);
+    let displayWidth = paperWidth * scale;
+    let displayHeight = paperHeight * scale;
+    
+    previewPaper.style.width = displayWidth + "px";
+    previewPaper.style.height = displayHeight + "px";
+    previewPaper.style.backgroundColor = "white";
+    previewPaper.style.position = "relative";
+    previewPaper.style.overflow = "hidden";
+    
+    let html = await generatePreviewHTML(p, last);
+    previewPaper.innerHTML = html;
+}
+
+function generatePreviewHTML(person, history) {
+    let customHeader = document.getElementById("customHeaderInput")?.value || "BADAN PERSONEL ELITE";
+    let customWatermark = document.getElementById("customWatermarkInput")?.value || "DOKUMEN RESMI";
+    let customFooter = document.getElementById("customFooterInput")?.value || "Dokumen resmi sistem penilaian.";
+    let watermarkOpacity = parseInt(document.getElementById("watermarkOpacity")?.value || "30");
+    let now = new Date();
+    let dateStr = now.toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'});
+    
+    let indicatorsHtml = "";
+    for(let idx=0; idx<indicators.length; idx++){
+        let ind = indicators[idx];
+        let pointsHtml = "";
+        let scoresArr = history.scores[idx] || [];
+        for(let j=0; j<ind.points.length; j++){
+            let score = scoresArr[j] || "-";
+            let scoreClass = (score === 'D' || score === 'E') ? 'color: #ff6464; font-weight: bold;' : '';
+            pointsHtml += `
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; ${scoreClass}">${ind.points[j].title} : ${score}</div>
+                    <div style="font-size: 10px; color: #666; margin-left: 15px;">${ind.points[j].detail}</div>
+                </div>
+            `;
+        }
+        indicatorsHtml += `
+            <div style="margin-bottom: 15px; page-break-inside: avoid;">
+                <div style="font-weight: bold; font-size: 13px; color: #2c5f8a; margin-bottom: 5px;">${ind.name}</div>
+                ${pointsHtml}
+            </div>
+        `;
+    }
+    
+    return `
+        <div style="position: relative; width: 100%; height: 100%; padding: 15px; font-family: Arial, sans-serif; box-sizing: border-box; overflow-y: auto;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 40px; color: rgba(180,180,180,${watermarkOpacity/100}); white-space: nowrap; pointer-events: none; z-index: 0;">
+                ${customWatermark}
+            </div>
+            <div style="position: relative; z-index: 1;">
+                <div style="background: #020617; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center;">
+                    <div style="color: #38bdf8; font-size: 18px; font-weight: bold;">${customHeader}</div>
+                    <div style="color: white; font-size: 10px;">Laporan Penilaian Kinerja Personel</div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold; font-size: 14px; color: #2c5f8a;">LAPORAN PENILAIAN PERIODE</div>
+                    <div style="font-size: 11px;">Nama Personel : ${person.name}</div>
+                    <div style="font-size: 11px;">Periode       : ${history.month}</div>
+                    <div style="font-size: 11px;">Lokasi        : ${history.location || "-"}</div>
+                    <div style="font-size: 11px;">No. Dokumen   : ${history.docNumber || "-"}</div>
+                    <div style="font-size: 11px;">Catatan       : ${history.note || "-"}</div>
+                </div>
+                
+                <div style="border-bottom: 1px solid #ccc; margin-bottom: 10px;">
+                    <div style="font-weight: bold; font-size: 12px; color: #2c5f8a;">DETAIL PENILAIAN</div>
+                </div>
+                
+                ${indicatorsHtml}
+                
+                <div style="margin-top: 15px; font-weight: bold; font-size: 13px; color: #2c5f8a;">
+                    TOTAL SKOR : ${history.total}  |  GRADE : ${history.grade}
+                </div>
+                
+                <div style="margin-top: 20px; font-size: 9px; color: #666; border-top: 1px solid #ccc; padding-top: 10px;">
+                    <div style="float: left;">Dikeluarkan oleh : (_________________________)<br>Nama & Tanda Tangan Atasan</div>
+                    <div style="float: right; text-align: right;">${history.location || "Lokasi tidak diisi"}, ${dateStr}</div>
+                    <div style="clear: both;"></div>
+                    <div style="text-align: center; margin-top: 10px;">${customFooter}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function closePrintPreview() {
+    document.getElementById("previewModal").classList.add("hidden");
+    document.getElementById("previewPaper").innerHTML = "";
+}
+
+async function printPreviewPDF() {
+    let previewPaper = document.getElementById("previewPaper");
+    if(!previewPaper || !previewPaper.innerHTML) return;
+    
+    try {
+        let canvas = await html2canvas(previewPaper, {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            logging: false,
+            useCORS: true
+        });
+        
+        let imgData = canvas.toDataURL('image/png');
+        let { jsPDF } = window.jspdf;
+        let config = getPDFConfig();
+        let doc = new jsPDF(config);
+        let imgWidth = doc.internal.pageSize.getWidth();
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        doc.save(`preview_${new Date().toISOString().slice(0,19)}.pdf`);
+        showToast("✅ PDF preview saved!");
+    } catch(e) {
+        console.error(e);
+        showToast("❌ Gagal menyimpan PDF", true);
+    }
+}
+
+// ==================== EXPORT EXCEL ====================
+function exportExcel(){
+    if(db.length===0) return showToast("Tidak ada data",true);
+    let rows=[["Nama","Periode","Lokasi","Total Skor","Grade","Catatan","Terkunci","No Dokumen"]];
+    db.forEach(p=>{ p.history.forEach(h=>{ rows.push([p.name,h.month,h.location||"-",h.total,h.grade,h.note||"",h.locked?"Ya":"Tidak",h.docNumber||""]); }); });
+    if(rows.length===1) return showToast("Tidak ada riwayat",true);
+    let csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    let a=document.createElement("a"); let url=URL.createObjectURL(blob); a.href=url; a.download="Riwayat_Penilaian.csv"; a.click(); URL.revokeObjectURL(url);
+    showToast("✅ Excel selesai!");
+}
+
+// ==================== INITIALIZE ====================
+document.getElementById("watermarkOpacity")?.addEventListener("input", function(e) {
+    document.getElementById("opacityValue").innerText = e.target.value + "%";
+});
+
+renderList(); renderRank(); updateDashboardStats(); populatePeriodFilter(); updateCharts(); checkThresholdAlerts();
+</script>
+</body>
+</html>
