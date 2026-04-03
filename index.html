@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>EVALUASI MASA KERJA · STRATEGIC ASSESSMENT</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box;}
+body{font-family:Segoe UI, system-ui;background:#0b1220;color:#e5e7eb;margin:0;padding:0;}
+body.light-mode{background:#f0f2f5;color:#1a1a2e;}
+body.light-mode .card{background:#ffffff;border:1px solid #ddd;}
+body.light-mode .header{background:#16213e;color:#38bdf8;}
+body.light-mode input,body.light-mode select,body.light-mode textarea{background:#f8f9fa;color:#1a1a2e;border:1px solid #ccc;}
+.header{background:#020617;padding:12px 16px;text-align:center;color:#38bdf8;font-weight:bold;font-size:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.theme-btn{background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:5px 12px;color:#fff;cursor:pointer;font-size:11px;}
+.clock{font-family:monospace;font-size:12px;background:rgba(0,0,0,0.5);padding:4px 10px;border-radius:20px;}
+.container{padding:12px;max-width:1400px;margin:auto;}
+.card{background:#111827;padding:14px;border-radius:12px;margin-bottom:12px;border:1px solid #1f2937;}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;background:#020617;color:#fff;border:1px solid #1f2937;font-size:1rem;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:#38bdf8;color:#000;font-weight:bold;font-size:1rem;cursor:pointer;transition:opacity 0.2s;}
+button:active{opacity:0.7;}
+.point{margin-bottom:10px;border-bottom:1px dashed #1f2937;padding-bottom:6px;}
+.detail{font-size:11px;color:#94a3b8;white-space:pre-line;line-height:1.5;}
+.hidden{display:none !important;}
+.badge{padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;}
+.A{background:#22c55e;}
+.B{background:#3b82f6;}
+.C{background:#facc15;color:#000;}
+.D,.E{background:#ef4444;}
+.analysis{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.rank{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.button-group{display:flex;gap:10px;flex-wrap:wrap;}
+.button-group button{flex:1;min-width:100px;}
+.lock-badge{background:#ef4444;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.unlock-badge{background:#22c55e;padding:2px 8px;border-radius:20px;font-size:10px;margin-left:8px;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-content{background:#111827;padding:24px;border-radius:16px;width:90%;max-width:700px;text-align:center;pointer-events:auto;max-height:85vh;overflow-y:auto;}
+canvas{touch-action:manipulation;max-width:100%;height:auto;}
+.toast-message{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:10px 20px;border-radius:30px;font-weight:bold;z-index:2000;animation:fadeOut 2s ease forwards;pointer-events:none;}
+@keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
+.settings-card{background:#1e293b;margin-bottom:12px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:15px;}
+.stat-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px;padding:12px;text-align:center;}
+.stat-card h3{font-size:24px;margin:5px 0;}
+.filter-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+.filter-bar input,.filter-bar select{flex:1;min-width:100px;margin-top:0;}
+.dashboard-charts{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;}
+.status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:bold;margin-left:10px;}
+.status-normal{background:#22c55e;color:#000;}
+.status-warning{background:#facc15;color:#000;}
+.status-critical{background:#ef4444;color:#fff;}
+.recommendation-box{background:#1e293b;border-radius:12px;padding:15px;margin-top:15px;border-left:4px solid #38bdf8;}
+.recommendation-select{font-size:1rem;padding:10px;border-radius:8px;width:100%;}
+.progress-up{color:#22c55e;font-weight:bold;}
+.progress-down{color:#ef4444;font-weight:bold;}
+.progress-stable{color:#facc15;font-weight:bold;}
+.radar-container{background:#111827;border-radius:12px;padding:15px;margin-top:15px;}
+.warning-text{color:#ef4444;font-size:12px;margin-top:5px;}
+.integrity-card{border-left:4px solid #facc15;}
+.leadership-card{border-left:4px solid #38bdf8;}
+@media (max-width:640px){
+    .dashboard-charts{grid-template-columns:1fr;}
+    .container{padding:8px;}
+    .button-group{flex-direction:column;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <span>⭐ EVALUASI MASA KERJA · STRATEGIC ASSESSMENT</span>
+        <div class="clock" id="clock"></div>
+    </div>
+    <div class="header-right">
+        <button class="theme-btn" onclick="toggleTheme('dark')">🌙</button>
+        <button class="theme-btn" onclick="toggleTheme('light')">☀️</button>
+    </div>
+</div>
+
+<div class="container">
+
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h3>🔐 AKSES SISTEM EVALUASI</h3>
+        <select id="roleSelect" style="margin:12px 0;">
+            <option value="admin">Danru / Admin (Akses Penuh)</option>
+            <option value="supervisor">Supervisor (Baca & Tambah)</option>
+        </select>
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="loginBtn">MASUK</button>
+        <div id="loginError" style="color:#f87171; margin-top:10px; font-size:12px;"></div>
+        <div style="margin-top:12px; font-size:11px; color:#6b7280;">Danru: adm7373 / Supervisor: spv7373</div>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <div id="listView">
+        <div class="card settings-card">
+            <div style="font-weight:bold; margin-bottom:8px;">⚙️ PENGATURAN EVALUASI</div>
+            <input type="text" id="customHeaderInput" placeholder="Nama Unit/Satuan" value="BADAN PERSONEL ELITE">
+            <label>🏢 Nama Instansi (di PDF)</label>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <input type="number" id="thresholdMin" placeholder="Nilai Minimal" value="60" style="width:50%;">
+                <button onclick="setThreshold()" style="width:50%; margin-top:0;">Set Threshold</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid" id="statsDashboard">
+            <div class="stat-card"><p>👥 TOTAL PERSONEL</p><h3 id="statTotalPersonel">0</h3></div>
+            <div class="stat-card"><p>⭐ RATA-RATA SKOR</p><h3 id="statAvgScore">0</h3></div>
+            <div class="stat-card"><p>🏆 TERBAIK</p><h3 id="statTopPersonel">-</h3></div>
+            <div class="stat-card"><p>📊 TOTAL EVALUASI</p><h3 id="statTotalAssessments">0</h3></div>
+        </div>
+        
+        <div class="dashboard-charts">
+            <div class="card"><canvas id="pieChartGrade" width="200" height="150"></canvas></div>
+            <div class="card"><canvas id="barChartPerform" width="200" height="150"></canvas></div>
+        </div>
+        
+        <div class="filter-bar">
+            <input type="text" id="searchInput" placeholder="🔍 Cari personel..." onkeyup="filterPersonel()">
+            <select id="periodFilter" onchange="filterPersonel()"><option value="">Semua Periode</option></select>
+            <select id="recommendationFilter" onchange="filterPersonel()">
+                <option value="">Semua Rekomendasi</option>
+                <option value="TERBAIK">🏆 TERBAIK</option>
+                <option value="BAIK">✅ BAIK</option>
+                <option value="CUKUP BAIK">📊 CUKUP BAIK</option>
+                <option value="BURUK">⚠️ BURUK</option>
+                <option value="BURUK SEKALI">🔴 BURUK SEKALI</option>
+            </select>
+            <button onclick="resetFilters()" style="width:auto; margin-top:0;">Reset</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="addPerson()">➕ Evaluasi Baru</button>
+            <button onclick="addSampleData()">📋 Data Contoh</button>
+            <button onclick="pdfAll()">📑 Rekap Semua PDF</button>
+            <button onclick="exportExcel()">📎 Excel</button>
+        </div>
+        
+        <div id="personList"></div>
+        <div id="rankBox" class="rank"></div>
+    </div>
+
+    <div id="detailView" class="hidden">
+        <div class="button-group">
+            <button onclick="back()">⬅️ Kembali ke Daftar</button>
+            <button id="deleteBtn" onclick="deletePerson()">🗑️ Hapus Personel</button>
+            <button id="lockBtn" onclick="toggleLock()">🔒 Kunci</button>
+        </div>
+        <div class="card">
+            <input id="name" placeholder="Nama Personel">
+            <select id="periodSelect" onchange="togglePeriodSpecificFields()">
+                <option value="">Pilih Periode Evaluasi</option>
+                <option value="3 Bulan">📘 Evaluasi 3 Bulan (Probation)</option>
+                <option value="6 Bulan">📙 Evaluasi 6 Bulan (Kontrak)</option>
+                <option value="12 Bulan">📕 Evaluasi 12 Bulan (Tetap/Promosi)</option>
+            </select>
+            <input id="location" placeholder="Lokasi Penilaian">
+            <input id="assessorName" placeholder="Nama Danru/Penilai">
+        </div>
+        
+        <!-- ========== INDIKATOR ASLI (7 KATEGORI) ========== -->
+        <div id="originalIndicators"></div>
+        
+        <!-- Loyalitas & Integritas (khusus 6 & 12 Bulan) -->
+        <div id="integrityIndicators" class="hidden"></div>
+        
+        <!-- Kepemimpinan (khusus 12 Bulan) -->
+        <div id="leadershipIndicators" class="hidden"></div>
+        
+        <div class="card">
+            <textarea id="noteBox" placeholder="Catatan Evaluasi (wajib diisi minimal 20 kata jika nilai di bawah 70)"></textarea>
+            <div id="noteWarning" class="warning-text hidden"></div>
+        </div>
+        
+        <!-- Status Rekomendasi -->
+        <div id="recommendationBox" class="recommendation-box hidden">
+            <label style="font-weight:bold; display:block; margin-bottom:8px;">🎯 STATUS REKOMENDASI (Keputusan Danru)</label>
+            <select id="recommendationSelect" class="recommendation-select">
+                <option value="">-- Pilih Status --</option>
+                <option value="TERBAIK">🏆 TERBAIK - Layak Promosi / Reward</option>
+                <option value="BAIK">✅ BAIK - Performa Memuaskan</option>
+                <option value="CUKUP BAIK">📊 CUKUP BAIK - Perlu Pembinaan</option>
+                <option value="BURUK">⚠️ BURUK - Surat Peringatan</option>
+                <option value="BURUK SEKALI">🔴 BURUK SEKALI - Skorsing / PHK</option>
+            </select>
+        </div>
+        
+        <button id="saveBtn" onclick="save()">💾 SIMPAN EVALUASI</button>
+        <button onclick="pdfCurrent()">📄 Export PDF</button>
+        <button onclick="showRadarChart()">📊 Radar Chart (Analisis Kekuatan)</button>
+        <button onclick="showProgress()">📈 Progress Tracking</button>
+        <div id="analysisBox" class="analysis"></div>
+    </div>
+</div>
+
+<div id="radarModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>📊 RADAR CHART · ANALISIS KEKUATAN PERSONEL</h3>
+        <canvas id="radarChart" width="500" height="400"></canvas>
+        <button onclick="closeRadar()">Tutup</button>
+    </div>
+</div>
+
+<div id="progressModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>📈 PROGRESS TRACKING · PERBANDINGAN EVALUASI</h3>
+        <div id="progressInfo"></div>
+        <canvas id="progressChart" width="500" height="300"></canvas>
+        <button onclick="closeProgress()">Tutup</button>
+    </div>
+</div>
+
+<script>
+// ==================== GLOBAL ====================
+let currentRole = null, loginLocked = false;
+let db = JSON.parse(localStorage.getItem("dbEliteStrategic") || "[]");
+let currentIndex = null;
+let thresholdMin = parseInt(localStorage.getItem("thresholdMin") || "60");
+let radarChart = null;
+let progressChart = null;
+
+// DOM Elements
+const nameInput=document.getElementById("name"), locationInput=document.getElementById("location");
+const periodSelect=document.getElementById("periodSelect"), noteBox=document.getElementById("noteBox");
+const assessorInput=document.getElementById("assessorName");
+
+// ==================== INDIKATOR ASLI (DARI FORM PENILAIAN 6.HTML) ====================
+let originalIndicators = [
+    { name: "Discipline & Attendance", points: [
+        { title: "Kehadiran sesuai jadwal kerja", detail: "• Hadir sesuai jadwal kerja yang telah ditetapkan tanpa ketidakhadiran tanpa keterangan\n• Tidak melakukan mangkir atau absensi fiktif\n• Menunjukkan konsistensi kehadiran selama periode penilaian\n• Tidak sering mengajukan izin mendadak tanpa alasan jelas" },
+        { title: "Ketepatan waktu", detail: "• Datang sebelum atau tepat pada waktu yang ditentukan\n• Tidak terlambat saat pergantian shift\n• Siap melaksanakan tugas saat jam kerja dimulai\n• Tidak memperpanjang waktu istirahat di luar ketentuan" },
+        { title: "Tidak meninggalkan pos", detail: "• Tetap berada di area tanggung jawab selama jam tugas\n• Tidak meninggalkan pos tanpa izin resmi\n• Siap siaga saat dibutuhkan\n• Menjaga area kerja tetap dalam pengawasan" },
+        { title: "Kepatuhan jam kerja", detail: "• Mematuhi jadwal kerja sesuai ketentuan\n• Tidak pulang sebelum waktunya\n• Tidak melanggar sistem shift\n• Disiplin terhadap waktu operasional" }
+    ] },
+    { name: "SOP Compliance", points: [
+        { title: "Kepatuhan SOP", detail: "• Menjalankan prosedur operasional sesuai standar\n• Tidak melakukan penyimpangan prosedur\n• Memahami SOP dengan baik\n• Menjadikan SOP sebagai acuan kerja utama" },
+        { title: "Penggunaan APD", detail: "• Menggunakan APD sesuai standar keselamatan\n• Tidak mengabaikan perlindungan diri\n• Menggunakan APD secara benar dan konsisten\n• Menjadi contoh bagi personel lain" },
+        { title: "Tidak melanggar prosedur", detail: "• Tidak melakukan tindakan di luar prosedur\n• Tidak mengambil keputusan tanpa dasar\n• Menghindari tindakan berisiko tinggi\n• Menjaga kepatuhan terhadap aturan operasional" },
+        { title: "Menjalankan instruksi", detail: "• Melaksanakan instruksi kerja dengan tepat\n• Tidak membangkang terhadap perintah\n• Responsif terhadap arahan atasan\n• Menyelesaikan tugas sesuai instruksi" }
+    ] },
+    { name: "Professional Competence", points: [
+        { title: "Pemahaman tugas", detail: "• Menguasai tugas pokok dan fungsi\n• Tidak mengalami kebingungan dalam bekerja\n• Memahami area tanggung jawab\n• Mampu bekerja tanpa pengawasan terus-menerus" },
+        { title: "Komunikasi", detail: "• Menyampaikan informasi dengan jelas dan sistematis\n• Menghindari miskomunikasi\n• Berkomunikasi efektif dengan tim\n• Mampu membuat laporan sederhana" },
+        { title: "Handling insiden", detail: "• Mampu menangani insiden sesuai prosedur\n• Tidak panik dalam kondisi darurat\n• Mengambil tindakan yang tepat\n• Menghubungi pihak terkait bila diperlukan" },
+        { title: "Decision making", detail: "• Mengambil keputusan secara cepat dan tepat\n• Tidak ragu dalam situasi kritis\n• Berdasarkan logika dan SOP\n• Tidak ceroboh dalam bertindak" }
+    ] },
+    { name: "Patrol Performance", points: [
+        { title: "Patroli sesuai jadwal", detail: "• Melaksanakan patroli sesuai jadwal\n• Tidak melewatkan waktu patroli\n• Konsisten dalam pelaksanaan\n• Tidak menunda kegiatan patroli" },
+        { title: "Checkpoint", detail: "• Melakukan pengecekan seluruh titik kontrol\n• Tidak ada checkpoint yang terlewat\n• Validasi dilakukan dengan benar\n• Dokumentasi patroli lengkap" },
+        { title: "Tidak ada area miss", detail: "• Seluruh area tercover dengan baik\n• Tidak ada blind spot\n• Patroli dilakukan secara menyeluruh\n• Tidak sekadar formalitas" },
+        { title: "Laporan akurat", detail: "• Laporan sesuai kondisi nyata\n• Tidak manipulasi data\n• Informasi lengkap dan jelas\n• Dapat dipertanggungjawabkan" }
+    ] },
+    { name: "Risk Awareness", points: [
+        { title: "Identifikasi risiko", detail: "• Mampu mengenali potensi bahaya\n• Tidak mengabaikan risiko\n• Proaktif dalam pengamatan\n• Cepat mengenali kondisi abnormal" },
+        { title: "Kewaspadaan", detail: "• Selalu dalam kondisi siaga\n• Tidak lengah selama bertugas\n• Fokus terhadap lingkungan sekitar\n• Tidak terdistraksi" },
+        { title: "Respons bahaya", detail: "• Cepat merespon kondisi berbahaya\n• Tidak menunda tindakan\n• Bertindak sesuai SOP\n• Mengutamakan keselamatan" },
+        { title: "Pelaporan", detail: "• Melaporkan kejadian tepat waktu\n• Tidak menutup-nutupi kejadian\n• Informasi akurat dan jelas\n• Disampaikan kepada pihak terkait" }
+    ] },
+    { name: "Work Attitude", points: [
+        { title: "Sikap kerja", detail: "• Menunjukkan sikap profesional\n• Tidak malas atau acuh\n• Memiliki etos kerja tinggi\n• Disiplin dalam perilaku" },
+        { title: "Stabil emosi", detail: "• Tidak mudah terpancing emosi\n• Tetap tenang dalam tekanan\n• Tidak konflik dengan rekan kerja\n• Mampu mengendalikan diri" },
+        { title: "Tanggung jawab", detail: "• Menyelesaikan tugas dengan baik\n• Tidak melempar kesalahan\n• Bertanggung jawab penuh\n• Tidak menghindari masalah" },
+        { title: "Etika", detail: "• Bersikap sopan terhadap semua pihak\n• Tidak arogan\n• Menjaga nama baik perusahaan\n• Berperilaku sesuai norma" }
+    ] },
+    { name: "Teamwork & Command", points: [
+        { title: "Kerja tim", detail: "• Mampu bekerja sama secara efektif\n• Tidak egois\n• Mendukung rekan kerja\n• Menjaga kekompakan tim" },
+        { title: "Kepatuhan", detail: "• Patuh terhadap atasan\n• Tidak membangkang\n• Mengikuti arahan\n• Menghormati struktur komando" },
+        { title: "Koordinasi", detail: "• Komunikasi antar personel berjalan baik\n• Tidak terjadi miskomunikasi\n• Sinkron dalam pelaksanaan tugas\n• Tidak bekerja sendiri-sendiri" },
+        { title: "Disiplin perintah", detail: "• Tidak melanggar instruksi\n• Tidak menunda perintah\n• Menjalankan tugas secara tepat\n• Konsisten dalam pelaksanaan" }
+    ] }
+];
+
+// ==================== LOYALITAS & INTEGRITAS (Khusus 6 & 12 Bulan) ====================
+let integrityIndicators = [
+    { name: "LOYALITAS & INTEGRITAS", points: [
+        { title: "Kejujuran dalam laporan", detail: "• Laporan sesuai kondisi nyata\n• Tidak manipulasi data\n• Dapat dipertanggungjawabkan\n• Transparan dalam pelaporan" },
+        { title: "Kemampuan kerja tanpa pengawasan (Lone Wolf)", detail: "• Produktif saat bekerja sendiri\n• Tidak butuh micromanagement\n• Inisiatif dalam menyelesaikan tugas\n• Mandiri dan bertanggung jawab" },
+        { title: "Loyalitas terhadap instruksi Danru", detail: "• Menjalankan perintah dengan baik\n• Tidak membangkang\n• Mendukung keputusan atasan\n• Konsisten dalam pelaksanaan" },
+        { title: "Kerja sama tim", detail: "• Mampu bekerja sama efektif\n• Tidak egois\n• Mendukung rekan kerja\n• Menjaga kekompakan tim" }
+    ] }
+];
+
+// ==================== KEPEMIMPINAN (Khusus 12 Bulan) ====================
+let leadershipIndicators = [
+    { name: "KEPEMIMPINAN & POTENSI PROMOSI", points: [
+        { title: "Kemampuan mempengaruhi tim", detail: "• Dapat menggerakkan rekan kerja\n• Menjadi panutan bagi tim\n• Disegani oleh personel lain\n• Memiliki karisma alami" },
+        { title: "Kemampuan mengambil inisiatif", detail: "• Proaktif dalam menyelesaikan masalah\n• Tidak menunggu perintah terus\n• Berani mengambil keputusan\n• Kreatif dalam solusi" },
+        { title: "Kemampuan menyelesaikan konflik", detail: "• Dapat memediasi perselisihan\n• Tetap netral dan adil\n• Mencari solusi terbaik\n• Menjaga harmoni tim" },
+        { title: "Potensi menjadi Wadanru/Danru", detail: "• Memiliki bakat kepemimpinan\n• Siap diberikan tanggung jawab lebih\n• Mampu mengayomi bawahan\n• Representatif untuk posisi lebih tinggi" }
+    ] }
+];
+
+// ==================== RENDER INDIKATOR ASLI ====================
+function renderOriginalIndicators(defaultVal) {
+    let box = document.getElementById("originalIndicators");
+    if(!box) return;
+    box.innerHTML = "";
+    originalIndicators.forEach((ind,i)=>{
+        let html = `<div class="card"><b>📋 ${ind.name}</b>`;
+        ind.points.forEach((p,j)=>{
+            html += `<div class="point">${p.title}<br><span class="detail">${p.detail}</span>
+                    <select data-orig="${i}" data-point="${j}">
+                        <option value="A">A (Sangat Baik)</option>
+                        <option value="B">B (Baik)</option>
+                        <option value="C">C (Cukup)</option>
+                        <option value="D">D (Kurang)</option>
+                        <option value="E">E (Buruk)</option>
+                    </select></div>`;
+        });
+        html += "</div>";
+        box.innerHTML += html;
+    });
+    if(defaultVal) document.querySelectorAll("select[data-orig]").forEach(s=>s.value=defaultVal);
+}
+
+function renderIntegrityIndicators(defaultVal) {
+    let box = document.getElementById("integrityIndicators");
+    if(!box) return;
+    box.innerHTML = "";
+    integrityIndicators.forEach((ind,i)=>{
+        let html = `<div class="card integrity-card"><b>🤝 ${ind.name}</b>`;
+        ind.points.forEach((p,j)=>{
+            html += `<div class="point">${p.title}<br><span class="detail">${p.detail}</span>
+                    <select data-integrity="${i}" data-point="${j}">
+                        <option value="A">A (Sangat Baik)</option>
+                        <option value="B">B (Baik)</option>
+                        <option value="C">C (Cukup)</option>
+                        <option value="D">D (Kurang)</option>
+                        <option value="E">E (Buruk)</option>
+                    </select></div>`;
+        });
+        html += "</div>";
+        box.innerHTML += html;
+    });
+    if(defaultVal) document.querySelectorAll("select[data-integrity]").forEach(s=>s.value=defaultVal);
+}
+
+function renderLeadershipIndicators(defaultVal) {
+    let box = document.getElementById("leadershipIndicators");
+    if(!box) return;
+    box.innerHTML = "";
+    leadershipIndicators.forEach((ind,i)=>{
+        let html = `<div class="card leadership-card"><b>👑 ${ind.name}</b>`;
+        ind.points.forEach((p,j)=>{
+            html += `<div class="point">${p.title}<br><span class="detail">${p.detail}</span>
+                    <select data-leadership="${i}" data-point="${j}">
+                        <option value="A">A (Sangat Baik)</option>
+                        <option value="B">B (Baik)</option>
+                        <option value="C">C (Cukup)</option>
+                        <option value="D">D (Kurang)</option>
+                        <option value="E">E (Buruk)</option>
+                    </select></div>`;
+        });
+        html += "</div>";
+        box.innerHTML += html;
+    });
+    if(defaultVal) document.querySelectorAll("select[data-leadership]").forEach(s=>s.value=defaultVal);
+}
+
+// ==================== PERIODE TOGGLE ====================
+function togglePeriodSpecificFields() {
+    let period = periodSelect.value;
+    let integrityDiv = document.getElementById("integrityIndicators");
+    let leadershipDiv = document.getElementById("leadershipIndicators");
+    let recommendationBox = document.getElementById("recommendationBox");
+    
+    if(period === "6 Bulan" || period === "12 Bulan") {
+        integrityDiv.classList.remove("hidden");
+    } else {
+        integrityDiv.classList.add("hidden");
+    }
+    
+    if(period === "12 Bulan") {
+        leadershipDiv.classList.remove("hidden");
+    } else {
+        leadershipDiv.classList.add("hidden");
+    }
+    
+    if(period !== "") {
+        recommendationBox.classList.remove("hidden");
+    } else {
+        recommendationBox.classList.add("hidden");
+    }
+}
+
+// ==================== GET ALL SCORES ====================
+function convert(v) { return {A:5,B:4,C:3,D:2,E:1}[v]; }
+
+function getAllScores() {
+    let total = 0;
+    let maxPoints = 0;
+    
+    // Original indicators (28 poin)
+    let origScores = [];
+    for(let i=0; i<originalIndicators.length; i++) {
+        let selects = document.querySelectorAll(`select[data-orig='${i}']`);
+        let catScores = [];
+        selects.forEach(s => {
+            let val = s.value;
+            catScores.push(val);
+            total += convert(val);
+            maxPoints += 5;
+        });
+        origScores.push(catScores);
+    }
+    
+    // Integrity indicators (4 poin) - jika visible
+    let integrityScores = [];
+    let integrityDiv = document.getElementById("integrityIndicators");
+    if(integrityDiv && !integrityDiv.classList.contains("hidden")) {
+        for(let i=0; i<integrityIndicators.length; i++) {
+            let selects = document.querySelectorAll(`select[data-integrity='${i}']`);
+            let catScores = [];
+            selects.forEach(s => {
+                let val = s.value;
+                catScores.push(val);
+                total += convert(val);
+                maxPoints += 5;
+            });
+            integrityScores.push(catScores);
+        }
+    }
+    
+    // Leadership indicators (4 poin) - jika visible
+    let leadershipScores = [];
+    let leadershipDiv = document.getElementById("leadershipIndicators");
+    if(leadershipDiv && !leadershipDiv.classList.contains("hidden")) {
+        for(let i=0; i<leadershipIndicators.length; i++) {
+            let selects = document.querySelectorAll(`select[data-leadership='${i}']`);
+            let catScores = [];
+            selects.forEach(s => {
+                let val = s.value;
+                catScores.push(val);
+                total += convert(val);
+                maxPoints += 5;
+            });
+            leadershipScores.push(catScores);
+        }
+    }
+    
+    return { origScores, integrityScores, leadershipScores, total, maxPoints };
+}
+
+// ==================== VALIDASI ====================
+function validateNote(total, maxPoints, note) {
+    let percentage = (total/maxPoints)*100;
+    if(percentage < 70) {
+        let wordCount = note.trim().split(/\s+/).filter(w => w.length > 0).length;
+        if(wordCount < 20) {
+            document.getElementById("noteWarning").innerHTML = "⚠️ Nilai di bawah 70. Catatan wajib diisi minimal 20 kata sebagai dasar evaluasi!";
+            document.getElementById("noteWarning").classList.remove("hidden");
+            return false;
+        }
+    }
+    document.getElementById("noteWarning").classList.add("hidden");
+    return true;
+}
+
+function getRecommendationFromGrade(grade, total, maxPoints) {
+    let percentage = (total/maxPoints)*100;
+    if(percentage >= 85) return "TERBAIK";
+    if(percentage >= 70) return "BAIK";
+    if(percentage >= 55) return "CUKUP BAIK";
+    if(percentage >= 40) return "BURUK";
+    return "BURUK SEKALI";
+}
+
+// ==================== CRUD ====================
+function getDocumentNumber() { return `EVAL-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*10000)}`; }
+
+function saveDB() { 
+    localStorage.setItem("dbEliteStrategic",JSON.stringify(db)); 
+    updateDashboardStats(); 
+    populatePeriodFilter(); 
+    renderList(); 
+    renderRank(); 
+    updateCharts(); 
+}
+
+function save() {
+    if(!nameInput.value) return showToast("Nama personel harus diisi!",true);
+    if(!periodSelect.value) return showToast("Pilih periode evaluasi!",true);
+    if(!locationInput.value) return showToast("Lokasi harus diisi!",true);
+    
+    let { origScores, integrityScores, leadershipScores, total, maxPoints } = getAllScores();
+    let percentage = (total/maxPoints)*100;
+    let grade = percentage >= 85 ? "A" : percentage >= 70 ? "B" : percentage >= 55 ? "C" : percentage >= 40 ? "D" : "E";
+    
+    let recommendation = document.getElementById("recommendationSelect").value;
+    if(!recommendation) {
+        recommendation = getRecommendationFromGrade(grade, total, maxPoints);
+    }
+    
+    if(!validateNote(total, maxPoints, noteBox.value)) return;
+    
+    let assessor = assessorInput?.value || currentRole || "Unknown";
+    let period = periodSelect.value;
+    let metadata = {
+        periode_months: period === "3 Bulan" ? 3 : period === "6 Bulan" ? 6 : 12,
+        periode_label: period,
+        danru_notes: noteBox.value,
+        system_ver: "GIP-Sovereign-v12",
+        timestamp: new Date().toISOString(),
+        location_verified: true
+    };
+    
+    if(currentIndex === null) {
+        db.push({ name: nameInput.value, history: [] });
+        currentIndex = db.length - 1;
+    }
+    
+    let p = db[currentIndex];
+    p.name = nameInput.value;
+    
+    let existingIndex = p.history.findIndex(h => h.period === period);
+    if(existingIndex !== -1) {
+        if(p.history[existingIndex].locked && currentRole !== 'admin') return showToast("Data evaluasi terkunci!",true);
+        if(!confirm(`Evaluasi periode ${period} sudah ada. Timpa?`)) return;
+        p.history[existingIndex] = {
+            period: period,
+            location: locationInput.value,
+            total: total,
+            maxPoints: maxPoints,
+            percentage: percentage.toFixed(1),
+            grade: grade,
+            recommendation: recommendation,
+            note: noteBox.value,
+            origScores: origScores,
+            integrityScores: integrityScores,
+            leadershipScores: leadershipScores,
+            locked: p.history[existingIndex].locked || false,
+            docNumber: getDocumentNumber(),
+            assessor: assessor,
+            metadata: metadata,
+            lastUpdate: new Date().toISOString()
+        };
+    } else {
+        p.history.push({
+            period: period,
+            location: locationInput.value,
+            total: total,
+            maxPoints: maxPoints,
+            percentage: percentage.toFixed(1),
+            grade: grade,
+            recommendation: recommendation,
+            note: noteBox.value,
+            origScores: origScores,
+            integrityScores: integrityScores,
+            leadershipScores: leadershipScores,
+            locked: false,
+            docNumber: getDocumentNumber(),
+            assessor: assessor,
+            metadata: metadata,
+            lastUpdate: new Date().toISOString()
+        });
+    }
+    
+    saveDB();
+    back();
+    renderList();
+    renderRank();
+    showToast(`✅ Evaluasi ${period} untuk ${p.name} tersimpan! Rekomendasi: ${recommendation}`);
+}
+
+function deletePerson() { 
+    if(currentRole!=='admin') return showToast("Hanya Danru/Admin!",true); 
+    if(!confirm("Hapus seluruh data personel?")) return; 
+    db.splice(currentIndex,1); 
+    saveDB(); 
+    back(); 
+    renderList(); 
+    renderRank(); 
+    showToast("🗑️ Dihapus"); 
+}
+
+function back() { 
+    document.getElementById("listView").classList.remove("hidden"); 
+    document.getElementById("detailView").classList.add("hidden"); 
+}
+
+function addPerson() { 
+    currentIndex = null; 
+    document.getElementById("listView").classList.add("hidden"); 
+    document.getElementById("detailView").classList.remove("hidden"); 
+    renderOriginalIndicators("C");
+    renderIntegrityIndicators("C");
+    renderLeadershipIndicators("C");
+    nameInput.value = locationInput.value = noteBox.value = "";
+    periodSelect.value = "";
+    assessorInput.value = currentRole || "";
+    document.getElementById("recommendationSelect").value = "";
+    togglePeriodSpecificFields();
+    nameInput.disabled = false;
+    document.querySelectorAll("select").forEach(s => s.disabled = false);
+    document.getElementById("saveBtn").disabled = false;
+}
+
+function openDetail(i) {
+    currentIndex = i;
+    document.getElementById("listView").classList.add("hidden");
+    document.getElementById("detailView").classList.remove("hidden");
+    renderOriginalIndicators();
+    renderIntegrityIndicators();
+    renderLeadershipIndicators();
+    
+    let p = db[i];
+    nameInput.value = p.name;
+    let last = p.history.at(-1);
+    
+    if(last) {
+        periodSelect.value = last.period;
+        locationInput.value = last.location || "";
+        noteBox.value = last.note;
+        assessorInput.value = last.assessor || "";
+        document.getElementById("recommendationSelect").value = last.recommendation || "";
+        togglePeriodSpecificFields();
+        
+        // Set original scores
+        if(last.origScores) {
+            for(let i=0; i<last.origScores.length; i++) {
+                let selects = document.querySelectorAll(`select[data-orig='${i}']`);
+                last.origScores[i].forEach((v,j) => {
+                    if(selects[j]) selects[j].value = v;
+                });
+            }
+        }
+        
+        // Set integrity scores
+        if(last.integrityScores && last.integrityScores.length > 0) {
+            for(let i=0; i<last.integrityScores.length; i++) {
+                let selects = document.querySelectorAll(`select[data-integrity='${i}']`);
+                last.integrityScores[i].forEach((v,j) => {
+                    if(selects[j]) selects[j].value = v;
+                });
+            }
+        }
+        
+        // Set leadership scores
+        if(last.leadershipScores && last.leadershipScores.length > 0) {
+            for(let i=0; i<last.leadershipScores.length; i++) {
+                let selects = document.querySelectorAll(`select[data-leadership='${i}']`);
+                last.leadershipScores[i].forEach((v,j) => {
+                    if(selects[j]) selects[j].value = v;
+                });
+            }
+        }
+        
+        if(last.locked && currentRole !== 'admin') {
+            nameInput.disabled = periodSelect.disabled = locationInput.disabled = noteBox.disabled = true;
+            if(assessorInput) assessorInput.disabled = true;
+            document.querySelectorAll("select").forEach(s => s.disabled = true);
+            document.getElementById("saveBtn").disabled = true;
+        } else {
+            nameInput.disabled = periodSelect.disabled = locationInput.disabled = noteBox.disabled = false;
+            if(assessorInput) assessorInput.disabled = false;
+            document.querySelectorAll("select").forEach(s => s.disabled = false);
+            document.getElementById("saveBtn").disabled = false;
+        }
+    }
+}
+
+function toggleLock() { 
+    if(currentRole!=='admin') return showToast("Hanya Danru/Admin!",true); 
+    if(currentIndex===null) return; 
+    let p=db[currentIndex], last=p.history.at(-1); 
+    if(!last) return; 
+    last.locked=!last.locked; 
+    saveDB(); 
+    renderList(); 
+    renderRank(); 
+    openDetail(currentIndex); 
+    showToast(last.locked?"🔒 Evaluasi terkunci":"🔓 Evaluasi tidak terkunci"); 
+}
+
+// ==================== DASHBOARD ====================
+function updateDashboardStats(){
+    let totalPersonel=db.length, totalAssessments=db.reduce((s,p)=>s+p.history.length,0), allScores=[];
+    db.forEach(p=>{ let l=p.history.at(-1); if(l){ allScores.push(l.total); } });
+    let avg=allScores.length?(allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1):0;
+    let best=db.reduce((b,p)=>{ let l=p.history.at(-1); if(!l) return b; if(!b||l.total>b.total) return {name:p.name,total:l.total}; return b; },null);
+    document.getElementById("statTotalPersonel").innerText=totalPersonel;
+    document.getElementById("statAvgScore").innerText=avg;
+    document.getElementById("statTotalAssessments").innerText=totalAssessments;
+    document.getElementById("statTopPersonel").innerHTML=best?`${best.name}<br><small>${best.total} pts</small>`:"-";
+}
+
+function populatePeriodFilter(){
+    let periods=new Set(); 
+    db.forEach(p=>p.history.forEach(h=>periods.add(h.period)));
+    let sel=document.getElementById("periodFilter"); 
+    if(!sel) return;
+    let cur=sel.value; 
+    sel.innerHTML='<option value="">Semua Periode</option>';
+    Array.from(periods).sort().forEach(p=>{ sel.innerHTML+=`<option value="${p}">${p}</option>`; });
+    sel.value=cur;
+}
+
+let filteredDb=[];
+function filterPersonel(){
+    let search=document.getElementById("searchInput").value.toLowerCase();
+    let period=document.getElementById("periodFilter").value;
+    let recommendation=document.getElementById("recommendationFilter").value;
+    
+    filteredDb=db.filter(p=>{
+        if(search&&!p.name.toLowerCase().includes(search)) return false;
+        let l=p.history.at(-1);
+        if(period&&(!l||l.period!==period)) return false;
+        if(recommendation&&(!l||l.recommendation!==recommendation)) return false;
+        return true;
+    });
+    
+    let pl=document.getElementById("personList"); if(!pl) return;
+    pl.innerHTML="";
+    if(filteredDb.length===0){ 
+        pl.innerHTML=`<div class="card" style="text-align:center; padding:40px;">
+            <div style="font-size:48px; margin-bottom:15px;">📋</div>
+            <div>Belum ada data evaluasi. Tekan "Evaluasi Baru" untuk mulai.</div>
+            <button onclick="addSampleData()" style="margin-top:15px; width:auto; display:inline-block;">📋 Tambah Data Contoh</button>
+        </div>`;
+        return; 
+    }
+    filteredDb.forEach(p=>{
+        let origIdx=db.findIndex(orig=>orig.name===p.name);
+        let l=p.history.at(-1);
+        let recBadge = l?.recommendation === "TERBAIK" ? "🏆" : l?.recommendation === "BAIK" ? "✅" : l?.recommendation === "CUKUP BAIK" ? "📊" : l?.recommendation === "BURUK" ? "⚠️" : "🔴";
+        pl.innerHTML+=`<div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+            <div>
+                <b>${escapeHtml(p.name)}</b><br>
+                <small>${l?.period||"-"} - ${l?.location||"-"} | ${recBadge} ${l?.recommendation||"-"} | Grade: ${l?.grade||"-"} | Skor: ${l?.total||0}/${l?.maxPoints||0}</small>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="openDetail(${origIdx})" style="width:auto; margin-top:0; padding:8px 15px;">Detail</button>
+                <button onclick="exportSinglePDF(${origIdx})" style="width:auto; margin-top:0; padding:8px 15px; background:#2d8f4e;">📄 PDF</button>
+                <button onclick="showComparisonProgress(${origIdx})" style="width:auto; margin-top:0; padding:8px 15px; background:#6b21a5;">📈 Progress</button>
+            </div>
+        </div>`;
+    });
+}
+
+function resetFilters(){ 
+    document.getElementById("searchInput").value=""; 
+    document.getElementById("periodFilter").value=""; 
+    document.getElementById("recommendationFilter").value=""; 
+    filterPersonel(); 
+}
+
+function renderList(){ filterPersonel(); }
+
+function renderRank(){
+    let r=document.getElementById("rankBox"); if(!r) return;
+    let sorted=[...db].sort((a,b)=>(b.history.at(-1)?.total||0)-(a.history.at(-1)?.total||0));
+    let html="<b>🏆 RANKING EVALUASI TERAKHIR</b><br>", has=false;
+    let top3 = sorted.slice(0,3);
+    top3.forEach((p,i)=>{ let l=p.history.at(-1); if(l){ has=true; html+=`${i+1}. ${escapeHtml(p.name)} – ${l.total}/${l.maxPoints} pts (${l.recommendation})<br>`; } });
+    r.innerHTML=has?html:"<div>Belum ada data evaluasi</div>";
+}
+
+function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g,m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+
+// ==================== CHARTS ====================
+let pieChart = null, barChart = null;
+function updateCharts(){
+    let gradeCount = { A:0, B:0, C:0, D:0, E:0 };
+    let personScores = [];
+    db.forEach(p => {
+        let last = p.history.at(-1);
+        if(last){
+            gradeCount[last.grade]++;
+            personScores.push({ name: p.name, score: last.total });
+        }
+    });
+    if(pieChart) pieChart.destroy();
+    let ctxPie = document.getElementById("pieChartGrade").getContext("2d");
+    pieChart = new Chart(ctxPie, {
+        type: 'pie',
+        data: { labels: ['A','B','C','D','E'], datasets: [{ data: [gradeCount.A, gradeCount.B, gradeCount.C, gradeCount.D, gradeCount.E], backgroundColor: ['#22c55e','#3b82f6','#facc15','#ef4444','#b91c1c'] }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#e5e7eb' } } } }
+    });
+    if(barChart) barChart.destroy();
+    let ctxBar = document.getElementById("barChartPerform").getContext("2d");
+    let top5 = personScores.sort((a,b)=>b.score-a.score).slice(0,5);
+    barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: { labels: top5.map(p=>p.name.length>10?p.name.slice(0,10)+'..':p.name), datasets: [{ label: 'Total Skor', data: top5.map(p=>p.score), backgroundColor: '#38bdf8' }] },
+        options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: 200 } }, plugins: { legend: { labels: { color: '#e5e7eb' } } } }
+    });
+}
+
+// ==================== RADAR CHART ====================
+function showRadarChart() {
+    if(currentIndex === null) return showToast("Pilih personel terlebih dahulu", true);
+    let p = db[currentIndex];
+    let last = p.history.at(-1);
+    if(!last) return showToast("Belum ada data evaluasi", true);
+    
+    let categories = [];
+    let scores = [];
+    
+    // Extract from original indicators (7 categories)
+    if(last.origScores) {
+        for(let i=0; i<last.origScores.length; i++) {
+            let catTotal = 0;
+            last.origScores[i].forEach(v => catTotal += convert(v));
+            categories.push(originalIndicators[i].name.substring(0,12));
+            scores.push((catTotal / (last.origScores[i].length * 5)) * 100);
+        }
+    }
+    
+    // Add integrity if exists
+    if(last.integrityScores && last.integrityScores.length > 0 && last.integrityScores[0].length > 0) {
+        let catTotal = 0;
+        last.integrityScores[0].forEach(v => catTotal += convert(v));
+        categories.push("Integritas");
+        scores.push((catTotal / (last.integrityScores[0].length * 5)) * 100);
+    }
+    
+    // Add leadership if exists
+    if(last.leadershipScores && last.leadershipScores.length > 0 && last.leadershipScores[0].length > 0) {
+        let catTotal = 0;
+        last.leadershipScores[0].forEach(v => catTotal += convert(v));
+        categories.push("Kepemimpinan");
+        scores.push((catTotal / (last.leadershipScores[0].length * 5)) * 100);
+    }
+    
+    let modal = document.getElementById("radarModal");
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+        let ctx = document.getElementById("radarChart").getContext("2d");
+        if(radarChart) radarChart.destroy();
+        radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: categories,
+                datasets: [{
+                    label: `${p.name} - ${last.period}`,
+                    data: scores,
+                    backgroundColor: 'rgba(56,189,248,0.2)',
+                    borderColor: '#38bdf8',
+                    pointBackgroundColor: '#38bdf8',
+                    pointBorderColor: '#fff',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20, color: '#e5e7eb' } } },
+                plugins: { legend: { labels: { color: '#e5e7eb' } } }
+            }
+        });
+    }, 100);
+}
+
+function closeRadar() {
+    document.getElementById("radarModal").classList.add("hidden");
+    if(radarChart) { radarChart.destroy(); radarChart = null; }
+}
+
+// ==================== PROGRESS TRACKING ====================
+function showComparisonProgress(index) {
+    let p = db[index];
+    if(!p || p.history.length === 0) return showToast("Tidak ada data", true);
+    
+    let sortedHistory = [...p.history].sort((a,b) => {
+        let aVal = a.period === "3 Bulan" ? 3 : a.period === "6 Bulan" ? 6 : 12;
+        let bVal = b.period === "3 Bulan" ? 3 : b.period === "6 Bulan" ? 6 : 12;
+        return aVal - bVal;
+    });
+    
+    let modal = document.getElementById("progressModal");
+    let infoDiv = document.getElementById("progressInfo");
+    modal.classList.remove("hidden");
+    
+    let periods = sortedHistory.map(h => h.period);
+    let scores = sortedHistory.map(h => h.total);
+    let recommendations = sortedHistory.map(h => h.recommendation);
+    
+    let progressHtml = `<div style="margin-bottom:15px; text-align:left;">
+        <strong>📊 ${p.name}</strong><br>`;
+    for(let i=1; i<sortedHistory.length; i++) {
+        let diff = scores[i] - scores[i-1];
+        let arrow = diff > 0 ? '🔼 Meningkat' : diff < 0 ? '🔽 Menurun' : '⏺ Stabil';
+        let color = diff > 0 ? 'progress-up' : diff < 0 ? 'progress-down' : 'progress-stable';
+        progressHtml += `<div>${periods[i-1]} → ${periods[i]}: <span class="${color}">${arrow} (${diff > 0 ? '+' : ''}${diff} pts)</span></div>`;
+    }
+    progressHtml += `</div>`;
+    infoDiv.innerHTML = progressHtml;
+    
+    setTimeout(() => {
+        let ctx = document.getElementById("progressChart").getContext("2d");
+        if(progressChart) progressChart.destroy();
+        progressChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: periods,
+                datasets: [{
+                    label: 'Total Skor Evaluasi',
+                    data: scores,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56,189,248,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 6,
+                    pointBackgroundColor: scores.map((s,i) => {
+                        let rec = recommendations[i];
+                        if(rec === "TERBAIK") return '#22c55e';
+                        if(rec === "BAIK") return '#3b82f6';
+                        if(rec === "CUKUP BAIK") return '#facc15';
+                        if(rec === "BURUK") return '#ef4444';
+                        return '#b91c1c';
+                    })
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Skor', color: '#e5e7eb' } } },
+                plugins: { legend: { labels: { color: '#e5e7eb' } } }
+            }
+        });
+    }, 100);
+}
+
+function closeProgress() {
+    document.getElementById("progressModal").classList.add("hidden");
+    if(progressChart) { progressChart.destroy(); progressChart = null; }
+}
+
+function showProgress() {
+    if(currentIndex === null) return showToast("Pilih personel terlebih dahulu", true);
+    showComparisonProgress(currentIndex);
+}
+
+// ==================== PDF GENERATION ====================
+function generateQRDataURL(data,size=80){ try{ let div=document.createElement('div'); new QRCode(div,{text:data,width:size,height:size}); let c=div.querySelector('canvas'); return c?c.toDataURL('image/png'):''; }catch(e){ return ''; } }
+
+async function exportSinglePDF(index) {
+    let p = db[index];
+    if(!p) return showToast("Data tidak ditemukan", true);
+    let last = p.history.at(-1);
+    if(!last) return showToast("Personel belum memiliki evaluasi", true);
+    
+    showToast(`📄 Menyiapkan PDF Evaluasi untuk ${p.name}...`);
+    try {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        let y = 20, left = 20, w = doc.internal.pageSize.width;
+        let customHeader = document.getElementById("customHeaderInput")?.value || "BADAN PERSONEL ELITE";
+        
+        doc.setFillColor(2,6,23); doc.rect(0,0,w,38,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.text(customHeader,left,15);
+        doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text("EVALUASI MASA KERJA STRATEGIS", left, 23);
+        doc.text(`Periode: ${last.period}`, left, 30);
+        doc.setTextColor(200,200,200); doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, w-20, 23, {align:"right"});
+        doc.setTextColor(0,0,0); y = 48;
+        
+        doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("DATA PERSONEL",left,y); doc.setTextColor(0,0,0); y+=5;
+        doc.setFontSize(9); doc.setFont("helvetica","normal");
+        doc.text(`Nama: ${p.name}`, left, y); y+=5;
+        doc.text(`Periode Evaluasi: ${last.period}`, left, y); y+=5;
+        doc.text(`Lokasi: ${last.location||"-"}`, left, y); y+=5;
+        doc.text(`Penilai (Danru): ${last.assessor||"-"}`, left, y); y+=5;
+        doc.text(`No. Dokumen: ${last.docNumber}`, left, y); y+=8;
+        
+        doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(56,189,248); doc.text("HASIL EVALUASI",left,y); doc.setTextColor(0,0,0); y+=5;
+        doc.setFontSize(11); doc.setFont("helvetica","bold");
+        let percentage = (last.total/last.maxPoints)*100;
+        doc.setTextColor(percentage >= 85 ? '#22c55e' : percentage >= 70 ? '#3b82f6' : percentage >= 55 ? '#facc15' : '#ef4444');
+        doc.text(`Total Skor: ${last.total} / ${last.maxPoints} (${percentage.toFixed(1)}%)`, left, y); y+=6;
+        doc.text(`Grade: ${last.grade}`, left, y); y+=6;
+        doc.setTextColor(56,189,248);
+        doc.text(`Status Rekomendasi: ${last.recommendation}`, left, y); y+=8;
+        doc.setTextColor(0,0,0);
+        
+        if(last.note) {
+            doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.text("Catatan Evaluasi:", left, y); y+=4;
+            doc.setFont("helvetica","normal");
+            let noteLines = doc.splitTextToSize(last.note, w-left-10);
+            doc.text(noteLines, left, y); y+=noteLines.length*4+4;
+        }
+        
+        let qrImage = generateQRDataURL(JSON.stringify({nama:p.name,periode:last.period,skor:last.total,rekomendasi:last.recommendation,docNumber:last.docNumber}),35);
+        if(qrImage && qrImage.startsWith("data:image")){ try{ doc.addImage(qrImage,'PNG',w-45,y+10,35,35); }catch(e){} }
+        
+        let pdfBlob = doc.output('blob');
+        let url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+        showToast(`✅ PDF Evaluasi ${p.name} selesai!`);
+    } catch(e) { console.error(e); showToast("❌ Gagal buat PDF", true); }
+}
+
+async function pdfCurrent() {
+    if(currentIndex===null) return showToast("Pilih personel terlebih dahulu", true);
+    await exportSinglePDF(currentIndex);
+}
+
+async function pdfAll() {
+    let toExport = db.filter(p => p.history.length > 0);
+    if(toExport.length === 0) return showToast("Belum ada data evaluasi", true);
+    showToast(`📑 Menyiapkan rekap ${toExport.length} personel...`);
+    try {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        let y = 20, left = 20, w = doc.internal.pageSize.width;
+        let customHeader = document.getElementById("customHeaderInput")?.value || "BADAN PERSONEL ELITE";
+        
+        doc.setFillColor(2,6,23); doc.rect(0,0,w,35,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(14); doc.text(customHeader,left,15);
+        doc.setTextColor(255,255,255); doc.setFontSize(9); doc.text("REKAP EVALUASI MASA KERJA SELURUH PERSONEL", left, 23);
+        doc.setTextColor(200,200,200); doc.text(`Dibuat: ${new Date().toLocaleString('id-ID')}`, w-20, 23, {align:"right"});
+        doc.setTextColor(0,0,0); y = 45;
+        
+        let sorted = [...toExport].sort((a,b)=>(b.history.at(-1)?.total||0)-(a.history.at(-1)?.total||0));
+        for(let idx=0; idx<sorted.length; idx++) {
+            let p = sorted[idx];
+            let l = p.history.at(-1);
+            if(!l) continue;
+            if(y > doc.internal.pageSize.height - 50) { doc.addPage(); y = 20; }
+            doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.text(`${idx+1}. ${p.name}`, left, y); y+=5;
+            doc.setFont("helvetica","normal"); doc.setFontSize(8);
+            doc.text(`   Periode: ${l.period} | Skor: ${l.total}/${l.maxPoints} | Grade: ${l.grade} | Rekomendasi: ${l.recommendation}`, left, y); y+=6;
+            y+=3;
+        }
+        
+        let pdfBlob = doc.output('blob');
+        let url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+        showToast(`✅ Rekap ${toExport.length} personel selesai!`);
+    } catch(e) { console.error(e); showToast("❌ Gagal buat rekap", true); }
+}
+
+function exportExcel(){
+    if(db.length===0) return showToast("Tidak ada data",true);
+    let rows=[["Nama","Periode","Lokasi","Total Skor","Max Skor","Persentase","Grade","Rekomendasi","Catatan","Penilai","No Dokumen","Timestamp"]];
+    db.forEach(p=>{ p.history.forEach(h=>{ 
+        rows.push([p.name,h.period,h.location||"-",h.total,h.maxPoints,h.percentage,h.grade,h.recommendation||"-",h.note||"",h.assessor||"-",h.docNumber||"",h.lastUpdate?new Date(h.lastUpdate).toLocaleString('id-ID'):"-"]); 
+    }); });
+    let csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+    let a=document.createElement("a"); let url=URL.createObjectURL(blob); a.href=url; a.download="Evaluasi_Personel.csv"; a.click(); URL.revokeObjectURL(url);
+    showToast("✅ Excel selesai!");
+}
+
+function setThreshold(){
+    let val = parseInt(document.getElementById("thresholdMin").value);
+    if(!isNaN(val)) { thresholdMin = val; localStorage.setItem("thresholdMin", val); showToast(`✅ Threshold nilai minimal: ${val}`); }
+}
+
+function toggleTheme(theme) {
+    document.body.className = theme === 'dark' ? '' : theme;
+    localStorage.setItem("theme", theme);
+}
+
+function startClock() { setInterval(() => { let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleTimeString('id-ID'); }, 1000); }
+
+function showToast(msg, isErr=false) { 
+    let t=document.createElement('div'); t.className='toast-message'; t.textContent=msg; 
+    if(isErr) t.style.background='#ef4444'; document.body.appendChild(t); 
+    setTimeout(()=>t.remove(),2500); 
+}
+
+// Sample Data
+function addSampleData() {
+    if(db.length > 0 && !confirm("Tambahkan data contoh? (tidak menghapus data yang ada)")) return;
+    
+    let samplePersonel = [
+        { name: "Budi Santoso", period: "3 Bulan", location: "Jakarta Pusat", total: 85, maxPoints: 140, grade: "B", recommendation: "BAIK", note: "Performa cukup baik, disiplin terjaga", assessor: "Danru Andi" },
+        { name: "Siti Nurhaliza", period: "3 Bulan", location: "Jakarta Selatan", total: 72, maxPoints: 140, grade: "C", recommendation: "CUKUP BAIK", note: "Perlu peningkatan komunikasi", assessor: "Danru Andi" },
+        { name: "Agus Wijaya", period: "6 Bulan", location: "Bekasi", total: 98, maxPoints: 160, grade: "B", recommendation: "BAIK", note: "Ada peningkatan signifikan", assessor: "Danru Andi" }
+    ];
+    
+    for(let s of samplePersonel) {
+        let existing = db.find(p => p.name === s.name);
+        if(!existing) {
+            db.push({ name: s.name, history: [] });
+            existing = db[db.length-1];
+        }
+        // Generate dummy scores
+        let dummyOrigScores = [];
+        for(let i=0; i<7; i++) {
+            let catScores = [];
+            for(let j=0; j<4; j++) {
+                catScores.push("C");
+            }
+            dummyOrigScores.push(catScores);
+        }
+        existing.history.push({
+            period: s.period, location: s.location, total: s.total, maxPoints: s.maxPoints,
+            percentage: ((s.total/s.maxPoints)*100).toFixed(1),
+            grade: s.grade, recommendation: s.recommendation, note: s.note,
+            origScores: dummyOrigScores, integrityScores: [], leadershipScores: [],
+            locked: false, docNumber: getDocumentNumber(), assessor: s.assessor,
+            metadata: { system_ver: "GIP-Sovereign-v12", timestamp: new Date().toISOString() },
+            lastUpdate: new Date().toISOString()
+        });
+    }
+    saveDB();
+    showToast("✅ Data contoh ditambahkan!");
+}
+
+// ==================== INITIALIZE ====================
+let savedTheme = localStorage.getItem("theme");
+if(savedTheme && savedTheme!=='dark') toggleTheme(savedTheme);
+
+function checkLogin() {
+    if(loginLocked) return;
+    loginLocked=true;
+    let pwd=document.getElementById("loginPassword").value, role=document.getElementById("roleSelect").value;
+    if((role==='admin' && pwd==='adm7373') || (role==='supervisor' && pwd==='spv7373')) {
+        currentRole=role;
+        document.getElementById("loginModal").remove();
+        document.getElementById("mainApp").classList.remove("hidden");
+        renderOriginalIndicators();
+        renderIntegrityIndicators();
+        renderLeadershipIndicators();
+        renderList(); renderRank(); updateDashboardStats(); populatePeriodFilter(); startClock(); updateCharts();
+        if(db.length === 0) {
+            setTimeout(() => { if(confirm("Database kosong. Tambah data contoh?")) addSampleData(); }, 500);
+        }
+        showToast("✅ Login berhasil! Selamat melakukan evaluasi masa kerja.");
+    } else { loginLocked=false; document.getElementById("loginError").innerText="Password salah!"; }
+}
+document.getElementById("loginBtn").addEventListener("click", checkLogin);
+
+renderOriginalIndicators();
+renderIntegrityIndicators();
+renderLeadershipIndicators();
+renderList(); renderRank(); updateDashboardStats(); populatePeriodFilter(); updateCharts();
+</script>
+</body>
+</html>
