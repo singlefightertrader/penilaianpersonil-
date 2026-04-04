@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>EVALUASI MASA KERJA · STRATEGIC ASSESSMENT</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box;}
+body{font-family:Segoe UI, system-ui;background:#0b1220;color:#e5e7eb;margin:0;padding:0;}
+body.light-mode{background:#f0f2f5;color:#1a1a2e;}
+body.light-mode .card{background:#ffffff;border:1px solid #ddd;}
+body.light-mode .header{background:#16213e;color:#38bdf8;}
+body.light-mode input,body.light-mode select,body.light-mode textarea{background:#f8f9fa;color:#1a1a2e;border:1px solid #ccc;}
+.header{background:#020617;padding:12px 16px;text-align:center;color:#38bdf8;font-weight:bold;font-size:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.theme-btn{background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:5px 12px;color:#fff;cursor:pointer;font-size:11px;}
+.clock{font-family:monospace;font-size:12px;background:rgba(0,0,0,0.5);padding:4px 10px;border-radius:20px;}
+.container{padding:12px;max-width:1400px;margin:auto;}
+.card{background:#111827;padding:14px;border-radius:12px;margin-bottom:12px;border:1px solid #1f2937;}
+input,select,textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;background:#020617;color:#fff;border:1px solid #1f2937;font-size:1rem;}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:10px;background:#38bdf8;color:#000;font-weight:bold;font-size:1rem;cursor:pointer;transition:opacity 0.2s;}
+button:active{opacity:0.7;}
+.point{margin-bottom:10px;border-bottom:1px dashed #1f2937;padding-bottom:6px;}
+.detail{font-size:11px;color:#94a3b8;white-space:pre-line;line-height:1.5;}
+.hidden{display:none !important;}
+.rank{background:#020617;padding:10px;margin-top:10px;border-radius:8px;}
+.button-group{display:flex;gap:10px;flex-wrap:wrap;}
+.button-group button{flex:1;min-width:100px;}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-content{background:#111827;padding:24px;border-radius:16px;width:90%;max-width:700px;text-align:center;pointer-events:auto;max-height:85vh;overflow-y:auto;}
+canvas{touch-action:manipulation;max-width:100%;height:auto;}
+.toast-message{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:10px 20px;border-radius:30px;font-weight:bold;z-index:2000;animation:fadeOut 2s ease forwards;pointer-events:none;}
+@keyframes fadeOut{0%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
+.settings-card{background:#1e293b;margin-bottom:12px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:15px;}
+.stat-card{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px;padding:12px;text-align:center;}
+.stat-card h3{font-size:24px;margin:5px 0;}
+.filter-bar{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+.filter-bar input,.filter-bar select{flex:1;min-width:100px;margin-top:0;}
+.dashboard-charts{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;}
+.recommendation-box{background:#1e293b;border-radius:12px;padding:15px;margin-top:15px;border-left:4px solid #38bdf8;}
+.recommendation-select{font-size:1rem;padding:10px;border-radius:8px;width:100%;}
+.integrity-card{border-left:4px solid #facc15;}
+.leadership-card{border-left:4px solid #38bdf8;}
+.ai-intel-box{background:linear-gradient(135deg,#1e3a8a,#0f172a);border-radius:12px;padding:15px;margin-top:15px;border:2px solid #facc15;}
+.ai-intel-header{display:flex;align-items:center;gap:10px;margin-bottom:15px;border-bottom:1px solid #334155;padding-bottom:10px;}
+.ai-intel-title{font-size:18px;font-weight:bold;color:#facc15;}
+.ai-intel-badge{background:#22c55e;color:#000;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:bold;}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:15px;}
+.ai-card{background:#111827;border-radius:10px;padding:12px;border-left:4px solid #38bdf8;}
+.ai-card-title{font-size:12px;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+.ai-card-value{font-size:14px;color:#e5e7eb;font-weight:bold;}
+.ai-final-decision{background:#020617;border-radius:12px;padding:15px;margin-top:15px;text-align:center;border:2px solid #facc15;}
+.btn-ai-generate{background:linear-gradient(135deg,#facc15,#eab308);color:#000;font-weight:bold;margin-top:10px;}
+.watermark-settings{background:#1e293b;border-radius:12px;padding:12px;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.watermark-settings input{width:auto;flex:1;margin-top:0;}
+@media (max-width:640px){
+    .dashboard-charts{grid-template-columns:1fr;}
+    .container{padding:8px;}
+    .button-group{flex-direction:column;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .ai-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <span>EVALUASI MASA KERJA · STRATEGIC ASSESSMENT</span>
+        <div class="clock" id="clock"></div>
+    </div>
+    <div class="header-right">
+        <button class="theme-btn" onclick="toggleTheme('dark')">Dark</button>
+        <button class="theme-btn" onclick="toggleTheme('light')">Light</button>
+    </div>
+</div>
+
+<div class="container">
+    <div id="mainApp">
+        <div id="listView">
+            <div class="card settings-card">
+                <div style="font-weight:bold; margin-bottom:8px;">PENGATURAN EVALUASI</div>
+                <input type="text" id="customHeaderInput" placeholder="Nama Unit/Satuan" value="BADAN PERSONEL ELITE">
+                <div class="watermark-settings">
+                    <input type="text" id="watermarkText" placeholder="Teks Watermark" value="DOKUMEN RESMI">
+                    <input type="number" id="watermarkOpacity" placeholder="Opacity" value="15" min="0" max="100" step="5" style="width:100px;">
+                    <button onclick="saveWatermarkSettings()" style="width:auto; margin-top:0; padding:8px 15px;">Set Watermark</button>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input type="number" id="thresholdMin" placeholder="Nilai Minimal" value="60" style="width:50%;">
+                    <button onclick="setThreshold()" style="width:50%; margin-top:0;">Set Threshold</button>
+                </div>
+            </div>
+            <div class="stats-grid" id="statsDashboard">
+                <div class="stat-card"><p>TOTAL PERSONEL</p><h3 id="statTotalPersonel">0</h3></div>
+                <div class="stat-card"><p>RATA-RATA SKOR</p><h3 id="statAvgScore">0</h3></div>
+                <div class="stat-card"><p>TERBAIK</p><h3 id="statTopPersonel">-</h3></div>
+                <div class="stat-card"><p>TOTAL EVALUASI</p><h3 id="statTotalAssessments">0</h3></div>
+            </div>
+            <div class="dashboard-charts">
+                <div class="card"><canvas id="pieChartGrade" width="200" height="150"></canvas></div>
+                <div class="card"><canvas id="barChartPerform" width="200" height="150"></canvas></div>
+            </div>
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Cari personel..." onkeyup="filterPersonel()">
+                <select id="periodFilter" onchange="filterPersonel()"><option value="">Semua Periode</option></select>
+                <select id="recommendationFilter" onchange="filterPersonel()">
+                    <option value="">Semua Rekomendasi</option>
+                    <option value="TERBAIK">TERBAIK</option>
+                    <option value="BAIK">BAIK</option>
+                    <option value="CUKUP BAIK">CUKUP BAIK</option>
+                    <option value="BURUK">BURUK</option>
+                    <option value="BURUK SEKALI">BURUK SEKALI</option>
+                </select>
+                <button onclick="resetFilters()" style="width:auto; margin-top:0;">Reset</button>
+            </div>
+            <div class="button-group">
+                <button onclick="addPerson()" id="btnAddPerson">Evaluasi Baru</button>
+                <button onclick="addSampleData()" id="btnAddSample">Data Contoh</button>
+                <button onclick="pdfAll()">Rekap Semua PDF</button>
+                <button onclick="exportExcel()">Export Excel</button>
+            </div>
+            <div id="personList"></div>
+            <div id="rankBox" class="rank"></div>
+        </div>
+
+        <div id="detailView" class="hidden">
+            <div class="button-group">
+                <button onclick="backToList()">Kembali ke Daftar</button>
+                <button id="deleteBtn" onclick="deletePerson()">Hapus Personel</button>
+                <button id="lockBtn" onclick="toggleLock()">Kunci</button>
+            </div>
+            <div class="card">
+                <input id="name" placeholder="Nama Personel">
+                <select id="periodSelect" onchange="togglePeriodSpecificFields()">
+                    <option value="">Pilih Periode Evaluasi</option>
+                    <option value="3 Bulan">Evaluasi 3 Bulan (Probation)</option>
+                    <option value="6 Bulan">Evaluasi 6 Bulan (Kontrak)</option>
+                    <option value="12 Bulan">Evaluasi 12 Bulan (Tetap/Promosi)</option>
+                </select>
+                <input id="location" placeholder="Lokasi Penilaian">
+                <input id="assessorName" placeholder="Nama Danru/Penilai">
+            </div>
+            <div id="originalIndicators"></div>
+            <div id="integrityIndicators" class="hidden"></div>
+            <div id="leadershipIndicators" class="hidden"></div>
+            <div class="card">
+                <textarea id="noteBox" placeholder="Catatan Evaluasi (minimal 20 kata jika nilai di bawah 70)"></textarea>
+            </div>
+            <div id="recommendationBox" class="recommendation-box hidden">
+                <label style="font-weight:bold; display:block; margin-bottom:8px;">STATUS REKOMENDASI (Keputusan Danru)</label>
+                <select id="recommendationSelect" class="recommendation-select">
+                    <option value="">-- Pilih Status --</option>
+                    <option value="TERBAIK">TERBAIK - Layak Promosi / Reward</option>
+                    <option value="BAIK">BAIK - Performa Memuaskan</option>
+                    <option value="CUKUP BAIK">CUKUP BAIK - Perlu Pembinaan</option>
+                    <option value="BURUK">BURUK - Surat Peringatan</option>
+                    <option value="BURUK SEKALI">BURUK SEKALI - Skorsing / PHK</option>
+                </select>
+                <button id="btnGenerateAI" class="btn-ai-generate" onclick="generateAIIntelligence()">GENERATE AI DANRU INTELLIGENCE SYSTEM</button>
+                <div id="aiIntelContainer" class="ai-intel-box hidden">
+                    <div class="ai-intel-header"><span class="ai-intel-title">AI PERSONNEL PERFORMANCE AND BEHAVIORAL INTELLIGENCE SYSTEM</span><span class="ai-intel-badge">v1.0</span></div>
+                    <div class="ai-grid">
+                        <div class="ai-card"><div class="ai-card-title">PERFORMANCE CATEGORY</div><div class="ai-card-value" id="aiPerformanceCat">-</div></div>
+                        <div class="ai-card"><div class="ai-card-title">PSYCHOLOGY ANALYSIS</div><div class="ai-card-value" id="aiPsychologyAnalysis">-</div></div>
+                        <div class="ai-card"><div class="ai-card-title">BEHAVIORAL ASSESSMENT</div><div class="ai-card-value" id="aiBehaviorAnalysis">-</div></div>
+                        <div class="ai-card"><div class="ai-card-title">RISK AND SECURITY</div><div class="ai-card-value" id="aiRiskAnalysis">-</div></div>
+                    </div>
+                    <div style="background:#0f172a; border-radius:10px; padding:12px; margin-bottom:12px;">
+                        <div style="font-size:12px; color:#94a3b8;">STATISTICAL DATA</div>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px; flex-wrap:wrap;">
+                            <span>Skor: <strong id="aiTotalScore">0</strong></span>
+                            <span>Max: <strong id="aiMaxScore">0</strong></span>
+                            <span>Persen: <strong id="aiPercentage">0%</strong></span>
+                        </div>
+                    </div>
+                    <div class="ai-final-decision">
+                        <div style="font-size:11px; color:#94a3b8;">FINAL DECISION</div>
+                        <div style="font-size:18px; font-weight:bold; color:#facc15; margin-top:8px;" id="aiFinalRecommendation">-</div>
+                        <div style="font-size:10px; color:#6b7280; margin-top:5px;" id="aiDecisionBasis">-</div>
+                    </div>
+                </div>
+            </div>
+            <button id="saveBtn" onclick="saveEvaluation()">SIMPAN EVALUASI</button>
+            <button onclick="pdfCurrent()">Export PDF Lengkap</button>
+            <button onclick="showRadarChart()">Radar Chart</button>
+            <button onclick="showProgressChart()">Progress Tracking</button>
+        </div>
+    </div>
+</div>
+
+<div id="radarModal" class="modal hidden"><div class="modal-content"><h3>RADAR CHART</h3><canvas id="radarChart" width="500" height="400"></canvas><button onclick="closeRadar()">Tutup</button></div></div>
+<div id="progressModal" class="modal hidden"><div class="modal-content"><h3>PROGRESS TRACKING</h3><div id="progressInfo"></div><canvas id="progressChart" width="500" height="300"></canvas><button onclick="closeProgress()">Tutup</button></div></div>
+
+<script>
+// ==================== INDIKATOR LENGKAP ====================
+var originalIndicators = [
+    { name: "Discipline and Attendance", points: [
+        { title: "Kehadiran sesuai jadwal kerja", detail: "Hadir sesuai jadwal tanpa ketidakhadiran tanpa keterangan" },
+        { title: "Ketepatan waktu", detail: "Datang tepat waktu, tidak terlambat saat shift" },
+        { title: "Tidak meninggalkan pos", detail: "Tetap di area tanggung jawab selama jam tugas" },
+        { title: "Kepatuhan jam kerja", detail: "Mematuhi jadwal kerja, tidak pulang sebelum waktunya" }
+    ] },
+    { name: "SOP Compliance", points: [
+        { title: "Kepatuhan SOP", detail: "Menjalankan prosedur operasional sesuai standar" },
+        { title: "Penggunaan APD", detail: "Menggunakan APD sesuai standar keselamatan" },
+        { title: "Tidak melanggar prosedur", detail: "Tidak melakukan tindakan di luar prosedur" },
+        { title: "Menjalankan instruksi", detail: "Melaksanakan instruksi kerja dengan tepat" }
+    ] },
+    { name: "Professional Competence", points: [
+        { title: "Pemahaman tugas", detail: "Menguasai tugas pokok dan fungsi" },
+        { title: "Komunikasi", detail: "Menyampaikan informasi dengan jelas" },
+        { title: "Handling insiden", detail: "Mampu menangani insiden sesuai prosedur" },
+        { title: "Decision making", detail: "Mengambil keputusan secara cepat dan tepat" }
+    ] },
+    { name: "Patrol Performance", points: [
+        { title: "Patroli sesuai jadwal", detail: "Melaksanakan patroli sesuai jadwal" },
+        { title: "Checkpoint", detail: "Melakukan pengecekan seluruh titik kontrol" },
+        { title: "Tidak ada area miss", detail: "Seluruh area tercover dengan baik" },
+        { title: "Laporan akurat", detail: "Laporan sesuai kondisi nyata" }
+    ] },
+    { name: "Risk Awareness", points: [
+        { title: "Identifikasi risiko", detail: "Mampu mengenali potensi bahaya" },
+        { title: "Kewaspadaan", detail: "Selalu dalam kondisi siaga" },
+        { title: "Respons bahaya", detail: "Cepat merespon kondisi berbahaya" },
+        { title: "Pelaporan", detail: "Melaporkan kejadian tepat waktu" }
+    ] },
+    { name: "Work Attitude", points: [
+        { title: "Sikap kerja", detail: "Menunjukkan sikap profesional" },
+        { title: "Stabil emosi", detail: "Tidak mudah terpancing emosi" },
+        { title: "Tanggung jawab", detail: "Menyelesaikan tugas dengan baik" },
+        { title: "Etika", detail: "Bersikap sopan terhadap semua pihak" }
+    ] },
+    { name: "Teamwork and Command", points: [
+        { title: "Kerja tim", detail: "Mampu bekerja sama secara efektif" },
+        { title: "Kepatuhan", detail: "Patuh terhadap atasan" },
+        { title: "Koordinasi", detail: "Komunikasi antar personel berjalan baik" },
+        { title: "Disiplin perintah", detail: "Tidak melanggar instruksi" }
+    ] }
+];
+
+var integrityIndicators = [
+    { name: "LOYALITAS DAN INTEGRITAS", points: [
+        { title: "Kejujuran dalam laporan", detail: "Laporan sesuai kondisi nyata" },
+        { title: "Kemampuan kerja tanpa pengawasan", detail: "Produktif saat bekerja sendiri" },
+        { title: "Loyalitas terhadap instruksi Danru", detail: "Menjalankan perintah dengan baik" },
+        { title: "Kerja sama tim", detail: "Mampu bekerja sama efektif" }
+    ] }
+];
+
+var leadershipIndicators = [
+    { name: "KEPEMIMPINAN DAN POTENSI PROMOSI", points: [
+        { title: "Kemampuan mempengaruhi tim", detail: "Dapat menggerakkan rekan kerja" },
+        { title: "Kemampuan mengambil inisiatif", detail: "Proaktif menyelesaikan masalah" },
+        { title: "Kemampuan menyelesaikan konflik", detail: "Dapat memediasi perselisihan" },
+        { title: "Potensi menjadi Wadanru Danru", detail: "Siap diberikan tanggung jawab lebih" }
+    ] }
+];
+
+// ==================== GLOBAL ====================
+var db = JSON.parse(localStorage.getItem("dbEliteStrategic") || "[]");
+var currentIndex = null;
+var watermarkText = localStorage.getItem("watermarkText") || "DOKUMEN RESMI";
+var watermarkOpacity = parseInt(localStorage.getItem("watermarkOpacity") || "15");
+var pieChart = null, barChart = null, radarChart = null, progressChart = null;
+var nameInput, locationInput, periodSelect, noteBox, assessorInput;
+
+function convert(v) { var val = {A:5,B:4,C:3,D:2,E:1}; return val[v]; }
+function showToast(msg, isErr) { var t=document.createElement('div'); t.className='toast-message'; t.textContent=msg; if(isErr) t.style.background='#ef4444'; document.body.appendChild(t); setTimeout(function(){t.remove();},2500); }
+function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';}); }
+function saveDB() { localStorage.setItem("dbEliteStrategic", JSON.stringify(db)); updateDashboardStats(); populatePeriodFilter(); renderList(); renderRank(); updateCharts(); }
+function toggleTheme(theme) { document.body.className = theme === 'dark' ? '' : theme; localStorage.setItem("theme", theme); }
+function setThreshold() { var val=parseInt(document.getElementById("thresholdMin").value); if(!isNaN(val)) { localStorage.setItem("thresholdMin", val); showToast("Threshold "+val); } }
+function saveWatermarkSettings() { watermarkText=document.getElementById("watermarkText").value||"DOKUMEN RESMI"; watermarkOpacity=parseInt(document.getElementById("watermarkOpacity").value)||15; localStorage.setItem("watermarkText",watermarkText); localStorage.setItem("watermarkOpacity",watermarkOpacity); showToast("Watermark: "+watermarkText); }
+function loadWatermarkSettings() { var wt=document.getElementById("watermarkText"); var wo=document.getElementById("watermarkOpacity"); if(wt) wt.value=watermarkText; if(wo) wo.value=watermarkOpacity; }
+
+function renderOriginalIndicators(def) { var box=document.getElementById("originalIndicators"); if(!box) return; box.innerHTML=""; for(var i=0;i<originalIndicators.length;i++){ var ind=originalIndicators[i]; var html='<div class="card"><b>'+ind.name+'</b>'; for(var j=0;j<ind.points.length;j++){ var p=ind.points[j]; html+='<div class="point">'+p.title+'<br><span class="detail">'+p.detail+'</span><select data-orig="'+i+'" data-point="'+j+'"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>'; } html+='</div>'; box.innerHTML+=html; } if(def){ var selects=document.querySelectorAll("select[data-orig]"); for(var k=0;k<selects.length;k++) selects[k].value=def; } }
+function renderIntegrityIndicators(def) { var box=document.getElementById("integrityIndicators"); if(!box) return; var html='<div class="card integrity-card"><b>'+integrityIndicators[0].name+'</b>'; for(var j=0;j<integrityIndicators[0].points.length;j++){ var p=integrityIndicators[0].points[j]; html+='<div class="point">'+p.title+'<br><span class="detail">'+p.detail+'</span><select data-integrity="0" data-point="'+j+'"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>'; } html+='</div>'; box.innerHTML=html; if(def){ var selects=document.querySelectorAll("select[data-integrity]"); for(var k=0;k<selects.length;k++) selects[k].value=def; } }
+function renderLeadershipIndicators(def) { var box=document.getElementById("leadershipIndicators"); if(!box) return; var html='<div class="card leadership-card"><b>'+leadershipIndicators[0].name+'</b>'; for(var j=0;j<leadershipIndicators[0].points.length;j++){ var p=leadershipIndicators[0].points[j]; html+='<div class="point">'+p.title+'<br><span class="detail">'+p.detail+'</span><select data-leadership="0" data-point="'+j+'"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>'; } html+='</div>'; box.innerHTML=html; if(def){ var selects=document.querySelectorAll("select[data-leadership]"); for(var k=0;k<selects.length;k++) selects[k].value=def; } }
+function togglePeriodSpecificFields() { if(!periodSelect) return; var period=periodSelect.value; var integrityDiv=document.getElementById("integrityIndicators"); var leadershipDiv=document.getElementById("leadershipIndicators"); var recBox=document.getElementById("recommendationBox"); if(integrityDiv) integrityDiv.classList.toggle("hidden", !(period==="6 Bulan"||period==="12 Bulan")); if(leadershipDiv) leadershipDiv.classList.toggle("hidden", period!=="12 Bulan"); if(recBox) recBox.classList.toggle("hidden", period===""); }
+function getAllScores() { var total=0, maxPoints=0, origScores=[]; for(var i=0;i<originalIndicators.length;i++){ var selects=document.querySelectorAll("select[data-orig='"+i+"']"); var cat=[]; for(var j=0;j<selects.length;j++){ var v=selects[j].value; cat.push(v); total+=convert(v); maxPoints+=5; } origScores.push(cat); } var integrityScores=[], leadershipScores=[]; var intDiv=document.getElementById("integrityIndicators"); if(intDiv&&!intDiv.classList.contains("hidden")){ var selects=document.querySelectorAll("select[data-integrity]"); var cat=[]; for(var j=0;j<selects.length;j++){ cat.push(selects[j].value); total+=convert(selects[j].value); maxPoints+=5; } integrityScores.push(cat); } var leadDiv=document.getElementById("leadershipIndicators"); if(leadDiv&&!leadDiv.classList.contains("hidden")){ var selects=document.querySelectorAll("select[data-leadership]"); var cat=[]; for(var j=0;j<selects.length;j++){ cat.push(selects[j].value); total+=convert(selects[j].value); maxPoints+=5; } leadershipScores.push(cat); } return {origScores:origScores,integrityScores:integrityScores,leadershipScores:leadershipScores,total:total,maxPoints:maxPoints}; }
+function updateDashboardStats() { var totalPersonel=db.length; var totalAssessments=0; for(var i=0;i<db.length;i++) totalAssessments+=db[i].history.length; var allScores=[]; for(var i=0;i<db.length;i++){ var l=db[i].history[db[i].history.length-1]; if(l) allScores.push(l.total); } var avg=allScores.length?(allScores.reduce(function(a,b){return a+b;},0)/allScores.length).toFixed(1):0; var best=null; for(var i=0;i<db.length;i++){ var l=db[i].history[db[i].history.length-1]; if(l){ if(!best||l.total>best.total) best={name:db[i].name,total:l.total}; } } var elTotal=document.getElementById("statTotalPersonel"); var elAvg=document.getElementById("statAvgScore"); var elAssess=document.getElementById("statTotalAssessments"); var elTop=document.getElementById("statTopPersonel"); if(elTotal) elTotal.innerText=totalPersonel; if(elAvg) elAvg.innerText=avg; if(elAssess) elAssess.innerText=totalAssessments; if(elTop) elTop.innerHTML=best?best.name+"<br><small>"+best.total+" pts</small>":"-"; }
+function populatePeriodFilter() { var periods={}; for(var i=0;i<db.length;i++){ for(var j=0;j<db[i].history.length;j++) periods[db[i].history[j].period]=true; } var sel=document.getElementById("periodFilter"); if(!sel) return; var cur=sel.value; sel.innerHTML='<option value="">Semua Periode</option>'; var keys=Object.keys(periods); keys.sort(); for(var i=0;i<keys.length;i++) sel.innerHTML+='<option value="'+keys[i]+'">'+keys[i]+'</option>'; sel.value=cur; }
+function filterPersonel() { var search=document.getElementById("searchInput").value.toLowerCase(); var period=document.getElementById("periodFilter").value; var rec=document.getElementById("recommendationFilter").value; var filtered=[]; for(var i=0;i<db.length;i++){ var p=db[i]; if(search&&!p.name.toLowerCase().includes(search)) continue; var l=p.history[p.history.length-1]; if(period&&(!l||l.period!==period)) continue; if(rec&&(!l||l.recommendation!==rec)) continue; filtered.push(p); } var pl=document.getElementById("personList"); if(!pl) return; pl.innerHTML=""; if(filtered.length===0){pl.innerHTML='<div class="card" style="text-align:center;">Belum ada data</div>'; return;} for(var i=0;i<filtered.length;i++){ var p=filtered[i]; var idx=-1; for(var j=0;j<db.length;j++){ if(db[j].name===p.name){ idx=j; break; } } var l=p.history[p.history.length-1]; pl.innerHTML+='<div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;"><div><b>'+escapeHtml(p.name)+'</b><br><small>'+(l?l.period:"-")+" | "+(l?l.recommendation:"-")+" | "+(l?l.total:0)+"/"+(l?l.maxPoints:0)+'</small></div><div style="display:flex; gap:8px;"><button onclick="openDetail('+idx+')" style="width:auto; margin-top:0;">Detail</button><button onclick="exportSinglePDF('+idx+')" style="width:auto; background:#2d8f4e; margin-top:0;">PDF</button></div></div>'; } }
+function renderList() { filterPersonel(); }
+function renderRank() { var r=document.getElementById("rankBox"); if(!r) return; var sorted=db.slice(); sorted.sort(function(a,b){return (b.history[b.history.length-1]?b.history[b.history.length-1].total:0) - (a.history[a.history.length-1]?a.history[a.history.length-1].total:0);}); var html="<b>RANKING (Top 5)</b><br>"; for(var i=0;i<Math.min(5,sorted.length);i++){ var l=sorted[i].history[sorted[i].history.length-1]; if(l) html+=(i+1)+". "+escapeHtml(sorted[i].name)+" - "+l.total+"/"+l.maxPoints+" pts<br>"; } r.innerHTML=html; }
+function updateCharts() { var gradeCount={A:0,B:0,C:0,D:0,E:0}; var personScores=[]; for(var i=0;i<db.length;i++){ var l=db[i].history[db[i].history.length-1]; if(l){ gradeCount[l.grade]++; personScores.push({name:db[i].name,score:l.total}); } } var ctxPie=document.getElementById("pieChartGrade"); if(ctxPie){ if(pieChart) pieChart.destroy(); pieChart=new Chart(ctxPie,{type:'pie',data:{labels:['A','B','C','D','E'],datasets:[{data:[gradeCount.A,gradeCount.B,gradeCount.C,gradeCount.D,gradeCount.E],backgroundColor:['#22c55e','#3b82f6','#facc15','#ef4444','#b91c1c']}]},options:{responsive:true}});} var ctxBar=document.getElementById("barChartPerform"); if(ctxBar){ if(barChart) barChart.destroy(); var top5=personScores.sort(function(a,b){return b.score-a.score;}).slice(0,5); barChart=new Chart(ctxBar,{type:'bar',data:{labels:top5.map(function(p){return p.name.length>10?p.name.slice(0,8)+'..':p.name;}),datasets:[{label:'Skor',data:top5.map(function(p){return p.score;}),backgroundColor:'#38bdf8'}]},options:{responsive:true}});} }
+function saveEvaluation() { if(!nameInput.value.trim()) return showToast("Nama harus diisi!", true); if(!periodSelect.value) return showToast("Pilih periode evaluasi!", true); var scores=getAllScores(); var total=scores.total, maxPoints=scores.maxPoints; var percentage=(total/maxPoints)*100; var grade=percentage>=85?"A":percentage>=70?"B":percentage>=55?"C":percentage>=40?"D":"E"; var recommendation=document.getElementById("recommendationSelect").value; if(!recommendation) recommendation=percentage>=85?"TERBAIK":percentage>=70?"BAIK":percentage>=55?"CUKUP BAIK":percentage>=40?"BURUK":"BURUK SEKALI"; if(percentage<70){ var words=noteBox.value.trim().split(/\s+/).filter(function(w){return w.length>0;}); if(words.length<20) return showToast("Catatan minimal 20 kata!", true); } if(currentIndex===null){ db.push({name:nameInput.value.trim(),history:[]}); currentIndex=db.length-1; } var p=db[currentIndex]; p.name=nameInput.value.trim(); var existingIndex=-1; for(var i=0;i<p.history.length;i++){ if(p.history[i].period===periodSelect.value){ existingIndex=i; break; } } var newEntry={period:periodSelect.value,location:locationInput.value||"-",total:total,maxPoints:maxPoints,percentage:percentage.toFixed(1),grade:grade,recommendation:recommendation,note:noteBox.value||"-",origScores:scores.origScores,integrityScores:scores.integrityScores,leadershipScores:scores.leadershipScores,locked:false,docNumber:"EVAL-"+new Date().toISOString().slice(0,10).replace(/-/g,'')+"-"+Math.floor(Math.random()*10000),assessor:assessorInput.value||"Admin",lastUpdate:new Date().toISOString()}; if(existingIndex!==-1) p.history[existingIndex]=newEntry; else p.history.push(newEntry); saveDB(); backToList(); showToast("Evaluasi tersimpan!"); }
+function backToList() { document.getElementById("listView").classList.remove("hidden"); document.getElementById("detailView").classList.add("hidden"); renderList(); renderRank(); updateCharts(); }
+function deletePerson() { if(confirm("Yakin ingin menghapus personel ini?")){ db.splice(currentIndex,1); saveDB(); backToList(); showToast("Personel dihapus");} }
+function addPerson() { currentIndex=null; document.getElementById("listView").classList.add("hidden"); document.getElementById("detailView").classList.remove("hidden"); renderOriginalIndicators("C"); renderIntegrityIndicators("C"); renderLeadershipIndicators("C"); if(nameInput) nameInput.value=""; if(locationInput) locationInput.value=""; if(noteBox) noteBox.value=""; if(periodSelect) periodSelect.value=""; if(assessorInput) assessorInput.value=""; var recSelect=document.getElementById("recommendationSelect"); if(recSelect) recSelect.value=""; togglePeriodSpecificFields(); var aiBox=document.getElementById("aiIntelContainer"); if(aiBox) aiBox.classList.add("hidden"); }
+function openDetail(i) { currentIndex=i; document.getElementById("listView").classList.add("hidden"); document.getElementById("detailView").classList.remove("hidden"); renderOriginalIndicators(); renderIntegrityIndicators(); renderLeadershipIndicators(); var p=db[i]; var last=p.history[p.history.length-1]; if(last){ nameInput.value=p.name; periodSelect.value=last.period; locationInput.value=last.location||""; noteBox.value=last.note||""; assessorInput.value=last.assessor||""; var recSelect=document.getElementById("recommendationSelect"); if(recSelect) recSelect.value=last.recommendation||""; togglePeriodSpecificFields(); if(last.origScores){ for(var idx=0;idx<last.origScores.length;idx++){ var sel=document.querySelectorAll("select[data-orig='"+idx+"']"); if(sel.length && last.origScores[idx]){ for(var j=0;j<last.origScores[idx].length;j++){ if(sel[j]) sel[j].value=last.origScores[idx][j]; } } } } if(last.integrityScores && last.integrityScores[0]){ var sel=document.querySelectorAll("select[data-integrity]"); for(var j=0;j<last.integrityScores[0].length;j++){ if(sel[j]) sel[j].value=last.integrityScores[0][j]; } } if(last.leadershipScores && last.leadershipScores[0]){ var sel=document.querySelectorAll("select[data-leadership]"); for(var j=0;j<last.leadershipScores[0].length;j++){ if(sel[j]) sel[j].value=last.leadershipScores[0][j]; } } } var aiBox=document.getElementById("aiIntelContainer"); if(aiBox) aiBox.classList.add("hidden"); }
+function toggleLock() { if(currentIndex===null) return; var p=db[currentIndex]; var last=p.history[p.history.length-1]; if(last){ last.locked=!last.locked; saveDB(); showToast(last.locked?"Terkunci":"Terbuka");} }
+function generateAIIntelligence() { var scores=getAllScores(); var total=scores.total, maxPoints=scores.maxPoints; var percentage=maxPoints>0?(total/maxPoints)*100:0; var perfCat=percentage>=85?"TERBAIK":percentage>=70?"BAIK":percentage>=55?"CUKUP":percentage>=40?"BURUK":"BURUK SEKALI"; var psych="Normal - Stabil"; if(percentage<40) psych="Kritis - Perlu intervensi segera"; else if(percentage<55) psych="Perbaikan signifikan diperlukan"; else if(percentage>=85) psych="Role Model - Motivasi tinggi"; var behav=percentage>=70?"Memenuhi standar perilaku":percentage>=55?"Perlu pembinaan perilaku":"Intervensi perilaku diperlukan"; var risk=percentage>=70?"Risiko rendah":percentage>=55?"Risiko sedang":"Risiko tinggi"; var perfEl=document.getElementById("aiPerformanceCat"); var psychEl=document.getElementById("aiPsychologyAnalysis"); var behavEl=document.getElementById("aiBehaviorAnalysis"); var riskEl=document.getElementById("aiRiskAnalysis"); var totalEl=document.getElementById("aiTotalScore"); var maxEl=document.getElementById("aiMaxScore"); var percEl=document.getElementById("aiPercentage"); var finalEl=document.getElementById("aiFinalRecommendation"); var basisEl=document.getElementById("aiDecisionBasis"); if(perfEl) perfEl.innerHTML=perfCat+"<br><small>"+percentage.toFixed(1)+"%</small>"; if(psychEl) psychEl.innerHTML=psych; if(behavEl) behavEl.innerHTML=behav; if(riskEl) riskEl.innerHTML=risk; if(totalEl) totalEl.innerText=total; if(maxEl) maxEl.innerText=maxPoints; if(percEl) percEl.innerText=percentage.toFixed(1)+"%"; var finalRec=percentage>=85?"TERBAIK":percentage>=70?"BAIK":percentage>=55?"CUKUP BAIK":percentage>=40?"BURUK":"BURUK SEKALI"; if(finalEl) finalEl.innerHTML=finalRec; if(basisEl) basisEl.innerHTML="Skor "+total+"/"+maxPoints+" ("+percentage.toFixed(1)+"%)"; var aiBox=document.getElementById("aiIntelContainer"); if(aiBox) aiBox.classList.remove("hidden"); var recSelect=document.getElementById("recommendationSelect"); if(recSelect && !recSelect.value){ if(percentage>=85) recSelect.value="TERBAIK"; else if(percentage>=70) recSelect.value="BAIK"; else if(percentage>=55) recSelect.value="CUKUP BAIK"; else if(percentage>=40) recSelect.value="BURUK"; else recSelect.value="BURUK SEKALI"; } showToast("AI Analysis selesai!"); }
+function showRadarChart() { if(currentIndex===null) return showToast("Pilih personel",true); var p=db[currentIndex]; var last=p.history[p.history.length-1]; if(!last) return; var categories=[], scores=[]; if(last.origScores){ for(var i=0;i<last.origScores.length;i++){ var catTotal=0; if(last.origScores[i]){ for(var j=0;j<last.origScores[i].length;j++) catTotal+=convert(last.origScores[i][j]); } categories.push(originalIndicators[i].name.substring(0,12)); scores.push((catTotal/(last.origScores[i]?last.origScores[i].length*5:1))*100); } } if(last.integrityScores && last.integrityScores[0]){ var sum=0; for(var j=0;j<last.integrityScores[0].length;j++) sum+=convert(last.integrityScores[0][j]); categories.push("Integritas"); scores.push((sum/(last.integrityScores[0].length*5))*100); } if(last.leadershipScores && last.leadershipScores[0]){ var sum=0; for(var j=0;j<last.leadershipScores[0].length;j++) sum+=convert(last.leadershipScores[0][j]); categories.push("Kepemimpinan"); scores.push((sum/(last.leadershipScores[0].length*5))*100); } var modal=document.getElementById("radarModal"); if(modal) modal.classList.remove("hidden"); setTimeout(function(){ var ctx=document.getElementById("radarChart"); if(ctx){ if(radarChart) radarChart.destroy(); radarChart=new Chart(ctx,{type:'radar',data:{labels:categories,datasets:[{label:p.name,data:scores,backgroundColor:'rgba(56,189,248,0.2)',borderColor:'#38bdf8',borderWidth:2}]},options:{responsive:true,scales:{r:{beginAtZero:true,max:100}}}});} },100);}
+function closeRadar(){ var modal=document.getElementById("radarModal"); if(modal) modal.classList.add("hidden"); if(window.radarChart) window.radarChart.destroy(); }
+function showProgressChart(){ if(currentIndex!==null) showComparisonProgress(currentIndex); else showToast("Pilih personel",true); }
+function showComparisonProgress(index){ var p=db[index]; if(!p||p.history.length===0) return showToast("Belum ada data progres",true); var sorted=p.history.slice(); sorted.sort(function(a,b){var order={ "3 Bulan":3, "6 Bulan":6, "12 Bulan":12 }; return (order[a.period]||0)-(order[b.period]||0);}); var modal=document.getElementById("progressModal"); if(modal) modal.classList.remove("hidden"); var infoDiv=document.getElementById("progressInfo"); if(infoDiv){ var html="<strong>"+p.name+"</strong><br>"; for(var i=1;i<sorted.length;i++){ var diff=sorted[i].total-sorted[i-1].total; var status=diff>0?'Meningkat':(diff<0?'Menurun':'Stabil'); html+=sorted[i-1].period+" -> "+sorted[i].period+": "+status+" ("+Math.abs(diff)+" pts)<br>"; } infoDiv.innerHTML=html; } setTimeout(function(){ var ctx=document.getElementById("progressChart"); if(ctx){ if(progressChart) progressChart.destroy(); progressChart=new Chart(ctx,{type:'line',data:{labels:sorted.map(function(h){return h.period;}),datasets:[{label:'Skor',data:sorted.map(function(h){return h.total;}),borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,0.1)',fill:true,tension:0.3}]},options:{responsive:true}});} },100);}
+function closeProgress(){ var modal=document.getElementById("progressModal"); if(modal) modal.classList.add("hidden"); if(window.progressChart) window.progressChart.destroy(); }
+function addSampleData() { var sampleScores=[]; for(var i=0;i<originalIndicators.length;i++){ var cat=[]; for(var j=0;j<originalIndicators[i].points.length;j++) cat.push("B"); sampleScores.push(cat); } var sampleIntegrity=[["B","B","C","B"]]; var sampleLeadership=[["C","C","B","C"]]; var sample={name:"Andika Pratama",history:[{period:"6 Bulan",location:"Jakarta",total:145,maxPoints:200,percentage:"72.5",grade:"B",recommendation:"BAIK",note:"Performa baik, disiplin dan bertanggung jawab. Menjaga integritas dengan baik. Patuh terhadap SOP dan memiliki komunikasi yang efektif dengan tim.",origScores:sampleScores,integrityScores:sampleIntegrity,leadershipScores:sampleLeadership,locked:false,docNumber:"DOC001",assessor:"Danru",lastUpdate:new Date().toISOString()}]}; db.push(sample); saveDB(); showToast("Contoh data ditambahkan"); }
+function exportExcel() { if(db.length===0) return showToast("Tidak ada data",true); var rows=[["Nama","Periode","Lokasi","Skor","Max","Persen","Grade","Rekomendasi","Penilai","Tanggal"]]; for(var i=0;i<db.length;i++){ var p=db[i]; for(var j=0;j<p.history.length;j++){ var h=p.history[j]; rows.push([p.name,h.period,h.location,h.total,h.maxPoints,h.percentage+"%",h.grade,h.recommendation,h.assessor,new Date(h.lastUpdate).toLocaleDateString('id-ID')]); } } var csv=""; for(var i=0;i<rows.length;i++){ var row=rows[i]; for(var j=0;j<row.length;j++){ csv+='"'+String(row[j]).replace(/"/g,'""')+'"'; if(j<row.length-1) csv+=','; } csv+='\n'; } var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"})); a.download="Evaluasi_"+new Date().toISOString().slice(0,10)+".csv"; a.click(); URL.revokeObjectURL(a.href); showToast("CSV selesai!"); }
+function addWatermark(doc,pageCount){ var opacity=watermarkOpacity/100; var text=watermarkText; for(var p=1;p<=pageCount;p++){ doc.setPage(p); doc.setFontSize(40); doc.setFont("helvetica","bold"); doc.setTextColor(180,180,180); doc.setGState(new doc.GState({opacity:opacity})); for(var x=-40;x<doc.internal.pageSize.width+40;x+=70){ for(var y=-40;y<doc.internal.pageSize.height+40;y+=55){ doc.text(text,x,y,{angle:45,align:"center"}); } } doc.setGState(new doc.GState({opacity:1})); } }
+
+async function exportSinglePDF(index){
+    var p=db[index]; if(!p) return showToast("Data tidak ditemukan",true);
+    var last=p.history[p.history.length-1]; if(!last) return showToast("Belum ada evaluasi",true);
+    showToast("Menyiapkan PDF...");
+    try{
+        var {jsPDF}=window.jspdf;
+        var doc=new jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+        var left=20, rightMargin=20, w=doc.internal.pageSize.width;
+        var contentWidth = w - left - rightMargin;
+        var y=25, pageNum=1;
+        
+        // Header
+        doc.setFillColor(2,6,23); doc.rect(0,0,w,40,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(14); doc.setFont("helvetica","bold");
+        var headerInput=document.getElementById("customHeaderInput");
+        doc.text(headerInput?headerInput.value:"BADAN PERSONEL ELITE",left,20);
+        doc.setFontSize(9); doc.setTextColor(255,255,255);
+        doc.text("LAPORAN EVALUASI MASA KERJA STRATEGIS",left,29);
+        doc.setTextColor(180,180,180); doc.text(new Date().toLocaleDateString('id-ID'),w-rightMargin,29,{align:"right"});
+        y=50;
+        
+        // Data Personel
+        doc.setFillColor(30,41,59); doc.rect(left-3,y-4,contentWidth+6,38,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(11); doc.setFont("helvetica","bold");
+        doc.text("A. DATA PERSONEL",left,y); y+=7;
+        doc.setTextColor(220,220,220); doc.setFontSize(9); doc.setFont("helvetica","normal");
+        doc.text("Nama: "+p.name,left,y); y+=5;
+        doc.text("Periode: "+last.period,left,y); y+=5;
+        doc.text("Lokasi: "+(last.location||"-"),left,y); y+=5;
+        doc.text("Penilai: "+(last.assessor||"-"),left,y); y+=5;
+        doc.text("Nomor Dokumen: "+last.docNumber,left,y); y+=8;
+        
+        // Fungsi untuk print indikator
+        
+        
+        function printIndicators(categoryName, indicatorsArray, scoresArray, colorR, colorG, colorB, yPos){
+            var currentY = yPos;
+
+            for(var catIdx=0;catIdx<indicatorsArray.length;catIdx++){
+                var cat = indicatorsArray[catIdx];
+
+                // Page break
+                if(currentY > 260){
+                    doc.addPage(); currentY = 25; pageNum++;
+                }
+
+                // Category Header (tight fit)
+                doc.setFont("helvetica","bold");
+                doc.setFontSize(10);
+
+                var headerHeight = 7;
+                doc.setFillColor(20,30,50);
+                doc.rect(left-2, currentY-4, contentWidth+4, headerHeight, 'F');
+
+                doc.setTextColor(colorR,colorG,colorB);
+                doc.text(categoryName, left, currentY);
+                currentY += headerHeight + 1;
+
+                for(var pointIdx=0; pointIdx<cat.points.length; pointIdx++){
+                    var point = cat.points[pointIdx];
+                    var nilai = "C";
+
+                    if(scoresArray && scoresArray[catIdx] && scoresArray[catIdx][pointIdx]){
+                        nilai = scoresArray[catIdx][pointIdx];
+                    }
+
+                    // Capture start Y (for vertical alignment)
+                    var startY = currentY;
+
+                    // Bullet dot
+                    doc.setFillColor(colorR,colorG,colorB);
+                    doc.circle(left+1, currentY-1.5, 0.8, 'F');
+
+                    // Title
+                    doc.setFont("helvetica","bold");
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(230,230,230);
+
+                    var titleLines = doc.splitTextToSize(point.title, contentWidth-25);
+                    for(var t=0; t<titleLines.length; t++){
+                        if(currentY > 275){ doc.addPage(); currentY=25; pageNum++; }
+                        doc.text(titleLines[t], left+4, currentY);
+                        currentY += 3.8;
+                    }
+
+                    // Detail
+                    doc.setFont("helvetica","normal");
+                    doc.setTextColor(140,140,140);
+
+                    var detailLines = doc.splitTextToSize(point.detail, contentWidth-30);
+                    for(var d=0; d<detailLines.length; d++){
+                        if(currentY > 275){ doc.addPage(); currentY=25; pageNum++; }
+                        doc.text(detailLines[d], left+6, currentY);
+                        currentY += 3.4;
+                    }
+
+                    // Calculate middle Y for score alignment
+                    var endY = currentY;
+                    var midY = (startY + endY) / 2;
+
+                    // Score (perfect vertical alignment)
+                    doc.setFont("helvetica","bold");
+                    doc.setFontSize(10);
+                    doc.setTextColor(colorR,colorG,colorB);
+                    doc.text(nilai, w-rightMargin-2, midY, {align:"right"});
+
+                    currentY += 2.5; // spacing antar bullet
+                }
+
+                currentY += 5; // spacing antar kategori
+            }
+
+            return currentY;
+        }
+
+
+        
+        // Original Indicators
+        y = printIndicators("B. INDIKATOR PENILAIAN", originalIndicators, last.origScores, 56, 189, 248, y);
+        
+        // Integrity Indicators
+        if(last.integrityScores && last.integrityScores[0] && last.integrityScores[0].length){
+            y = printIndicators("C. LOYALITAS DAN INTEGRITAS", integrityIndicators, last.integrityScores, 245, 158, 11, y);
+        }
+        
+        // Leadership Indicators
+        if(last.leadershipScores && last.leadershipScores[0] && last.leadershipScores[0].length){
+            y = printIndicators("D. KEPEMIMPINAN DAN POTENSI PROMOSI", leadershipIndicators, last.leadershipScores, 56, 189, 248, y);
+        }
+        
+        // Catatan
+        if(last.note && last.note.trim() && last.note!=="-"){
+            if(y > 250){ doc.addPage(); y=25; pageNum++; }
+            doc.setFillColor(30,41,59); doc.rect(left-2,y-2,contentWidth+4,7,'F');
+            doc.setTextColor(56,189,248); doc.setFontSize(10); doc.setFont("helvetica","bold");
+            doc.text("E. CATATAN EVALUASI",left,y); y+=5;
+            doc.setTextColor(200,200,200); doc.setFontSize(8); doc.setFont("helvetica","normal");
+            var noteLines=doc.splitTextToSize(last.note,contentWidth);
+            for(var d=0;d<noteLines.length;d++){
+                if(y > 275){ doc.addPage(); y=25; pageNum++; }
+                doc.text(noteLines[d],left,y); y+=4;
+            }
+            y+=4;
+        }
+        
+        // Rekomendasi
+        if(y > 260){ doc.addPage(); y=25; pageNum++; }
+        doc.setFillColor(30,41,59); doc.rect(left-2,y-2,contentWidth+4,12,'F');
+        doc.setTextColor(56,189,248); doc.setFontSize(10); doc.setFont("helvetica","bold");
+        doc.text("F. STATUS REKOMENDASI",left,y); y+=5;
+        var recText="";
+        if(last.recommendation=="TERBAIK") recText="TERBAIK - Layak Promosi / Reward";
+        else if(last.recommendation=="BAIK") recText="BAIK - Performa Memuaskan";
+        else if(last.recommendation=="CUKUP BAIK") recText="CUKUP BAIK - Perlu Pembinaan";
+        else if(last.recommendation=="BURUK") recText="BURUK - Surat Peringatan";
+        else recText="BURUK SEKALI - Skorsing / PHK";
+        doc.setTextColor(220,220,220); doc.setFontSize(9);
+        doc.text(recText,left,y); y+=8;
+        
+        // AI Intelligence
+        var percentage=(last.total/last.maxPoints)*100;
+        var perfCat=percentage>=85?"TERBAIK":percentage>=70?"BAIK":percentage>=55?"CUKUP":percentage>=40?"BURUK":"BURUK SEKALI";
+        var psych="Normal - Stabil";
+        if(percentage<40) psych="Kritis - Perlu intervensi segera";
+        else if(percentage<55) psych="Perbaikan signifikan diperlukan";
+        else if(percentage>=85) psych="Role Model - Motivasi tinggi";
+        var behav=percentage>=70?"Memenuhi standar perilaku":percentage>=55?"Perlu pembinaan perilaku":"Intervensi perilaku diperlukan";
+        var risk=percentage>=70?"Risiko rendah":percentage>=55?"Risiko sedang":"Risiko tinggi";
+        
+        if(y+70 > doc.internal.pageSize.height){ doc.addPage(); y=25; pageNum++; }
+        doc.setFillColor(30,41,59); doc.rect(left-2,y-2,contentWidth+4,7,'F');
+        doc.setTextColor(245,158,11); doc.setFontSize(10); doc.setFont("helvetica","bold");
+        doc.text("G. AI PERSONNEL PERFORMANCE AND BEHAVIORAL INTELLIGENCE",left,y); y+=5;
+        
+        doc.setFillColor(17,24,39); doc.rect(left-1,y-1,contentWidth+2,58,'F');
+        doc.setTextColor(245,158,11); doc.setFontSize(9); doc.setFont("helvetica","bold");
+        doc.text("AI ANALYSIS REPORT",left,y); y+=5;
+        
+        doc.setTextColor(56,189,248); doc.setFontSize(8); doc.setFont("helvetica","bold");
+        doc.text("Performance Category:",left+2,y); doc.setTextColor(220,220,220); doc.setFont("helvetica","normal");
+        doc.text(perfCat,left+45,y); doc.setTextColor(56,189,248); doc.text(percentage.toFixed(1)+"%",w-rightMargin-2,y,{align:"right"}); y+=5;
+        
+        doc.setTextColor(56,189,248); doc.setFont("helvetica","bold");
+        doc.text("Psychology Analysis:",left+2,y); doc.setTextColor(220,220,220); doc.setFont("helvetica","normal");
+        doc.text(psych,left+45,y); y+=5;
+        
+        doc.setTextColor(56,189,248); doc.setFont("helvetica","bold");
+        doc.text("Behavioral Assessment:",left+2,y); doc.setTextColor(220,220,220); doc.setFont("helvetica","normal");
+        doc.text(behav,left+48,y); y+=5;
+        
+        doc.setTextColor(56,189,248); doc.setFont("helvetica","bold");
+        doc.text("Risk and Security:",left+2,y); doc.setTextColor(220,220,220); doc.setFont("helvetica","normal");
+        doc.text(risk,left+42,y); y+=8;
+        
+        doc.setFillColor(2,6,23); doc.rect(left-1,y-1,contentWidth+2,13,'F');
+        doc.setTextColor(100,100,100); doc.setFontSize(7);
+        doc.text("Statistical Data",left+2,y); y+=4;
+        doc.setTextColor(220,220,220); doc.setFontSize(8);
+        doc.text("Skor: "+last.total,left+4,y); doc.text("Max: "+last.maxPoints,w-55,y); doc.text("Persen: "+percentage.toFixed(1)+"%",w-rightMargin-2,y,{align:"right"}); y+=6;
+        
+        doc.setFillColor(20,30,50); doc.rect(left-1,y-1,contentWidth+2,12,'F');
+        doc.setTextColor(245,158,11); doc.setFontSize(8); doc.setFont("helvetica","bold");
+        doc.text("Final Decision:",left+2,y); y+=4;
+        doc.setTextColor(56,189,248); doc.setFontSize(9);
+        doc.text(last.recommendation,left+4,y); y+=4;
+        doc.setTextColor(130,130,150); doc.setFontSize(6);
+        doc.text("Basis: Skor "+last.total+"/"+last.maxPoints+" ("+percentage.toFixed(1)+"%)",left+4,y); y+=5;
+        
+        // Footer
+        for(var i=1;i<=pageNum;i++){ 
+            doc.setPage(i); 
+            doc.setTextColor(100,100,100); 
+            doc.setFontSize(7); 
+            doc.text("Halaman "+i+" dari "+pageNum,w/2,doc.internal.pageSize.height-8,{align:"center"}); 
+            doc.text("Dokumen: "+last.docNumber,left,doc.internal.pageSize.height-8); 
+            doc.text(new Date().toLocaleString('id-ID'),w-rightMargin,doc.internal.pageSize.height-8,{align:"right"}); 
+        }
+        addWatermark(doc,pageNum);
+        var pdfBlob=doc.output('blob'); var url=URL.createObjectURL(pdfBlob); window.open(url,'_blank'); setTimeout(function(){URL.revokeObjectURL(url);},2000);
+        showToast("PDF selesai!");
+    }catch(e){console.error(e); showToast("Gagal buat PDF",true);}
+}
+async function pdfCurrent(){ if(currentIndex!==null) await exportSinglePDF(currentIndex); else showToast("Pilih personel",true); }
+async function pdfAll(){ var toExport=[]; for(var i=0;i<db.length;i++){ if(db[i].history.length>0) toExport.push(db[i]); } if(toExport.length===0) return showToast("Tidak ada data",true); showToast("Menyiapkan "+toExport.length+" dokumen..."); for(var i=0;i<toExport.length;i++){ var idx=-1; for(var j=0;j<db.length;j++){ if(db[j].name===toExport[i].name){ idx=j; break; } } await exportSinglePDF(idx); await new Promise(function(r){setTimeout(r,500);}); } showToast("Semua PDF selesai!"); }
+function resetFilters(){ var s=document.getElementById("searchInput"); var p=document.getElementById("periodFilter"); var r=document.getElementById("recommendationFilter"); if(s) s.value=""; if(p) p.value=""; if(r) r.value=""; filterPersonel(); }
+function startClock(){ setInterval(function(){var c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleTimeString('id-ID');},1000); }
+
+window.addEventListener('DOMContentLoaded',function(){
+    nameInput=document.getElementById("name"); locationInput=document.getElementById("location");
+    periodSelect=document.getElementById("periodSelect"); noteBox=document.getElementById("noteBox");
+    assessorInput=document.getElementById("assessorName");
+    renderOriginalIndicators(); renderIntegrityIndicators(); renderLeadershipIndicators();
+    renderList(); renderRank(); updateDashboardStats(); populatePeriodFilter(); startClock(); updateCharts();
+    loadWatermarkSettings();
+    var savedTheme=localStorage.getItem("theme"); if(savedTheme&&savedTheme!=='dark') toggleTheme(savedTheme);
+    if(db.length===0) setTimeout(function(){if(confirm("Tambah data contoh untuk memulai?")) addSampleData();},500);
+    showToast("Sistem siap digunakan");
+});
+</script>
+</body>
+</html>
